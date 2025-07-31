@@ -16,6 +16,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load configuration -->
+    <script src="config.js"></script>
     <!-- TensorFlow.js for AI-powered object detection -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>
@@ -407,31 +409,19 @@
             <span>Search taking longer than expected. Please wait...</span>
         </div>
     </div> 
-    <!-- Google Maps API - Restricted to authorized domains only -->
+    <!-- Google Maps API - Now loaded securely from config -->
     <script>
-        // SECURITY NOTE: API keys below are domain-restricted in Google Cloud Console
-        // They only work on authorized domains and cannot be used maliciously
-        const MAPS_API_KEY = 'AIzaSyDll2jvuvURfgbfs9JV4Iiuoh1IYBKsztU';
+        // Load Google Maps API with secure config
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places,visualization,marker&callback=initMap&loading=async`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.googleMaps.apiKey}&libraries=places,visualization,marker&callback=initMap&loading=async`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
     </script>
     <script>
         // SECURITY NOTE: Firebase config is designed to be public
-        // Security is enforced through Firestore rules and domain restrictions
-        const firebaseConfig = {
-            apiKey: "AIzaSyC-2qIR03QzfDZ5AHCa8q7Y503y2tnKe7g",
-            authDomain: "mindmap-mental-health-1d8f7.firebaseapp.com", 
-            projectId: "mindmap-mental-health-1d8f7",
-            storageBucket: "mindmap-mental-health-1d8f7.firebasestorage.app",
-            messagingSenderId: "793337509337",
-            appId: "1:793337509337:web:46ffb3bb243cb1f9f615c8",
-            measurementId: "G-GTJ5T2CXHV"
-        };
-
-        firebase.initializeApp(firebaseConfig);
+        // Configuration now loaded from config.js (secure)
+        firebase.initializeApp(window.CONFIG.firebase);
         const db = firebase.firestore();
         const auth = firebase.auth();
         
