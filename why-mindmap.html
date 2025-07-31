@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why MindMap? - Mental Health Geography</title>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-purple: #8b5cf6;
+            --light-blue: #dbeafe;
+            --light-purple: #ede9fe;
+            --dark-blue: #1e40af;
+            --dark-purple: #7c3aed;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --background-white: #ffffff;
+            --background-gray: #f9fafb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--background-white);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--background-white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.5rem;
+            opacity: 0;
+            animation: logoFadeIn 1s ease-out 0.3s forwards;
+        }
+
+        .nav-logo .logo {
+            height: 56px;
+            width: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-logo:hover .logo {
+            transform: scale(1.05);
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            opacity: 0;
+            animation: fadeInRight 1s ease-out 0.5s forwards;
+        }
+
+        .back-btn:hover {
+            background: var(--dark-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Animations */
+        @keyframes logoFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            min-height: calc(100vh - 80px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--light-purple) 100%);
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.1; }
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInScale 1s ease-out 0.7s forwards;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.9s forwards;
+        }
+
+        /* Content Section */
+        .content-section {
+            padding: 4rem 0;
+        }
+
+        /* Mission Grid */
+        .mission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .mission-card {
+            background: var(--background-white);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .mission-card:nth-child(1) { animation-delay: 1.1s; }
+        .mission-card:nth-child(2) { animation-delay: 1.3s; }
+        .mission-card:nth-child(3) { animation-delay: 1.5s; }
+
+        .mission-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-blue);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .mission-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .mission-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .mission-card p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Problem Solution Section */
+        .problem-solution {
+            margin: 4rem 0;
+        }
+
+        .problem-section, .solution-section {
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .problem-section { animation-delay: 1.7s; }
+        .solution-section { animation-delay: 1.9s; }
+
+        .problem-section h2, .solution-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        /* Stats Grid */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--background-gray);
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+            opacity: 0;
+            animation: fadeInScale 0.6s ease forwards;
+        }
+
+        .stat-item:nth-child(1) { animation-delay: 2.1s; }
+        .stat-item:nth-child(2) { animation-delay: 2.3s; }
+        .stat-item:nth-child(3) { animation-delay: 2.5s; }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-text {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Feature List */
+        .feature-list {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--background-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .feature-item:nth-child(1) { animation-delay: 2.7s; }
+        .feature-item:nth-child(2) { animation-delay: 2.9s; }
+        .feature-item:nth-child(3) { animation-delay: 3.1s; }
+        .feature-item:nth-child(4) { animation-delay: 3.3s; }
+
+        .feature-item:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            transform: translateX(5px);
+        }
+
+        .feature-item i {
+            color: var(--primary-blue);
+            background: var(--light-blue);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-item:hover i {
+            transform: scale(1.1);
+        }
+
+        .feature-item h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .feature-item p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Vision Section */
+        .vision-section {
+            margin: 4rem 0;
+            padding: 3rem 0;
+            background: var(--background-gray);
+            border-radius: 16px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 3.5s;
+        }
+
+        .vision-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .vision-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .vision-text p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .placeholder-graphic {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: linear-gradient(135deg, var(--light-blue), var(--light-purple));
+            border-radius: 12px;
+            text-align: center;
+            color: var(--primary-blue);
+            transition: transform 0.3s ease;
+        }
+
+        .placeholder-graphic:hover {
+            transform: scale(1.02);
+        }
+
+        .placeholder-graphic i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .placeholder-graphic span {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        /* Impact Section */
+        .impact-section {
+            margin: 4rem 0;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 3.7s;
+        }
+
+        .impact-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .impact-item {
+            text-align: center;
+            padding: 2rem 1rem;
+            opacity: 0;
+            animation: fadeInScale 0.6s ease forwards;
+        }
+
+        .impact-item:nth-child(1) { animation-delay: 3.9s; }
+        .impact-item:nth-child(2) { animation-delay: 4.1s; }
+        .impact-item:nth-child(3) { animation-delay: 4.3s; }
+        .impact-item:nth-child(4) { animation-delay: 4.5s; }
+
+        .impact-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .impact-item:hover .impact-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .impact-icon i {
+            font-size: 2rem;
+        }
+
+        .impact-item h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .impact-item p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin: 4rem 0;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--light-blue), var(--light-purple));
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInScale 0.8s ease forwards;
+            animation-delay: 4.7s;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            animation: pulse 6s ease-in-out infinite reverse;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-section p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--background-gray);
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 0 1rem;
+            margin-top: 4rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 4.9s;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h4 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul li a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--primary-blue);
+        }
+
+        .footer-disclaimer {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            padding: 1rem;
+            background: var(--light-blue);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.125rem;
+            }
+            
+            .nav-container {
+                padding: 0 1rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .mission-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .vision-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .back-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .nav-logo {
+                font-size: 1.25rem;
+            }
+            
+            .nav-logo .logo {
+                height: 44px;
+            }
+
+            .impact-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .hero-section {
+                padding: 3rem 0;
+            }
+
+            .content-section {
+                padding: 3rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iMzAiIHI9IjE1IiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNMzUgMzBDMzUgMjEgNDEgMTUgNTAgMTVTNjUgMjEgNjUgMzAiIHN0cm9rZT0iIzNiODJmNiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+CjxjaXJjbGUgY3g9IjQzIiBjeT0iMjciIHI9IjIiIGZpbGw9IiMzYjgyZjYiLz4KPGNpcmNsZSBjeD0iNTciIGN5PSIyNyIgcj0iMiIgZmlsbD0iIzNiODJmNiIvPgo8cGF0aCBkPSJNNDUgMzNINTUiIHN0cm9rZT0iIzNiODJmNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHBhdGggZD0iTTUwIDQ1TDQwIDcwSDYwTDUwIDQ1WiIgZmlsbD0iIzhiNWNmNiIvPgo8Y2lyY2xlIGN4PSI1MCIgY3k9IjcwIiByPSI0IiBmaWxsPSIjZmZmZmZmIi8+Cjwvc3ZnPg==" alt="MindMap Logo" class="logo">
+                <span class="logo-text">MindMap</span>
+            </a>
+            <a href="index.html" class="back-btn">
+                <i data-lucide="arrow-left"></i>
+                Back to Map
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="hero-section">
+            <div class="container">
+                <h1 class="hero-title">Why MindMap?</h1>
+                <p class="hero-subtitle">Bridging the gap between mental health resources and those who need them most</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="container">
+                <div class="mission-grid">
+                    <div class="mission-card">
+                        <div class="card-icon">
+                            <i data-lucide="heart"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To make mental health resources accessible, discoverable, and connected to real communities. We believe everyone deserves to know what support is available in their neighborhood.</p>
+                    </div>
+
+                    <div class="mission-card">
+                        <div class="card-icon">
+                            <i data-lucide="map-pin"></i>
+                        </div>
+                        <h3>Location-Based Care</h3>
+                        <p>Mental health support is most effective when it's nearby and accessible. Our map-based approach helps you find resources within walking distance, reducing barriers to care.</p>
+                    </div>
+
+                    <div class="mission-card">
+                        <div class="card-icon">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <h3>Track Your Journey</h3>
+                        <p>Understanding patterns in your mental health can be powerful. Our mood tracking helps you identify triggers, celebrate progress, and share insights with healthcare providers.</p>
+                    </div>
+                </div>
+
+                <div class="problem-solution">
+                    <div class="problem-section">
+                        <h2>The Problem We're Solving</h2>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">1 in 5</div>
+                                <div class="stat-text">Adults experience mental health issues annually</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">60%</div>
+                                <div class="stat-text">Don't know where to find local mental health resources</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">47%</div>
+                                <div class="stat-text">Delay seeking help due to accessibility barriers</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="solution-section">
+                        <h2>Our Solution</h2>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <i data-lucide="search"></i>
+                                <div>
+                                    <h4>Resource Discovery</h4>
+                                    <p>Find therapists, counselors, support groups, and mental health clinics in your area with detailed information and real-time availability.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <i data-lucide="activity"></i>
+                                <div>
+                                    <h4>Mood Tracking</h4>
+                                    <p>Log your emotional state with location context to identify patterns and share meaningful data with healthcare providers.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <i data-lucide="navigation"></i>
+                                <div>
+                                    <h4>Wellness Walks</h4>
+                                    <p>Discover nearby parks, gardens, and peaceful spaces perfect for mental health walks and outdoor therapy.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <i data-lucide="shield-alert"></i>
+                                <div>
+                                    <h4>Emergency Resources</h4>
+                                    <p>Quick access to crisis hotlines, emergency contacts, and immediate mental health support when you need it most.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vision-section">
+                    <h2>Our Vision</h2>
+                    <div class="vision-content">
+                        <div class="vision-text">
+                            <p>We envision a world where mental health support is as easy to find as the nearest coffee shop. Where communities are connected, resources are transparent, and no one has to navigate their mental health journey alone.</p>
+                            <p>MindMap isn't just an app—it's a movement toward more accessible, community-centered mental healthcare.</p>
+                        </div>
+                        <div class="vision-image">
+                            <div class="placeholder-graphic">
+                                <i data-lucide="globe"></i>
+                                <span>Connected Communities</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="impact-section">
+                    <h2>Making an Impact</h2>
+                    <div class="impact-grid">
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <h4>Community Building</h4>
+                            <p>Connecting individuals with local support networks and peer communities</p>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i data-lucide="clock"></i>
+                            </div>
+                            <h4>Reducing Wait Times</h4>
+                            <p>Helping people find available resources faster, reducing the time between need and care</p>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i data-lucide="bar-chart"></i>
+                            </div>
+                            <h4>Data-Driven Insights</h4>
+                            <p>Providing communities with anonymous data to improve mental health resource allocation</p>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i data-lucide="heart-handshake"></i>
+                            </div>
+                            <h4>Stigma Reduction</h4>
+                            <p>Normalizing mental health care by making it visible and accessible in every neighborhood</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cta-section">
+                    <h2>Ready to Start Your Journey?</h2>
+                    <p>Join thousands of others who are taking control of their mental health with location-aware support.</p>
+                    <a href="index.html" class="cta-button">
+                        <i data-lucide="map"></i>
+                        Explore the Map
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#" target="_blank">Crisis Hotlines</a></li>
+                        <li><a href="#" target="_blank">Find a Therapist</a></li>
+                        <li><a href="#" target="_blank">Support Groups</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>About</h4>
+                    <ul>
+                        <li><a href="#" target="_blank">Privacy Policy</a></li>
+                        <li><a href="#" target="_blank">Terms of Service</a></li>
+                        <li><a href="#" target="_blank">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <p class="footer-disclaimer">
+                        <strong>Important:</strong> MindMap is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of qualified health providers.
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 MindMap. Built with ❤️ for better mental health accessibility.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
