@@ -849,33 +849,111 @@
                 showNotification('✨ Demo data generated! Check your analytics for advanced insights.', 'success');
                 
                 console.log('🎬 Generated', demoEntries.length, 'demo entries for showcase');
+                
+                // Update button state
+                updateDemoButtons();
             }
         }
         
-        // Add demo button to UI (for development/demo purposes)
-        function addDemoButton() {
-            const demoBtn = document.createElement('button');
-            demoBtn.innerHTML = '🎬 Demo Data';
-            demoBtn.style.cssText = `
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                background: #8b5cf6;
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 0.875rem;
-                z-index: 10000;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            `;
-            demoBtn.onclick = generateDemoData;
-            document.body.appendChild(demoBtn);
+        // Clear demo data function
+        function clearDemoData() {
+            if (confirm('Clear all demo data? This will remove all generated mood entries and reset your data.')) {
+                // Filter out demo entries
+                moodData = moodData.filter(entry => !entry.isDemo);
+                
+                // Reset points if needed
+                const remainingEntries = moodData.length;
+                if (remainingEntries === 0) {
+                    userPoints = 0;
+                    localStorage.setItem('wellnessPoints', '0');
+                }
+                
+                // Update displays
+                updatePointsDisplay();
+                showNotification('🗑️ Demo data cleared! Your real data is preserved.', 'success');
+                
+                console.log('🗑️ Demo data cleared, remaining entries:', remainingEntries);
+                
+                // Update button text
+                updateDemoButtons();
+            }
         }
         
-        // Initialize demo button for showcase
-        setTimeout(addDemoButton, 2000);
+        // Update demo button based on data state
+        function updateDemoButtons() {
+            const existingButtons = document.querySelectorAll('.demo-btn');
+            existingButtons.forEach(btn => btn.remove());
+            
+            const hasDemoData = moodData.some(entry => entry.isDemo);
+            
+            if (hasDemoData) {
+                // Show Clear button
+                const clearBtn = document.createElement('button');
+                clearBtn.innerHTML = '🗑️ Clear Demo';
+                clearBtn.className = 'demo-btn';
+                clearBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                clearBtn.onclick = clearDemoData;
+                document.body.appendChild(clearBtn);
+                
+                // Show Generate More button
+                const moreBtn = document.createElement('button');
+                moreBtn.innerHTML = '➕ More Demo';
+                moreBtn.className = 'demo-btn';
+                moreBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 140px;
+                    background: #10b981;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                moreBtn.onclick = generateDemoData;
+                document.body.appendChild(moreBtn);
+            } else {
+                // Show Generate button
+                const demoBtn = document.createElement('button');
+                demoBtn.innerHTML = '🎬 Demo Data';
+                demoBtn.className = 'demo-btn';
+                demoBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: #8b5cf6;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                demoBtn.onclick = generateDemoData;
+                document.body.appendChild(demoBtn);
+            }
+        }
+        
+        // Initialize demo buttons for showcase
+        setTimeout(updateDemoButtons, 2000);
 
         // Enhanced Mood Tracker with descriptions
         let selectedMood = null;
@@ -1321,6 +1399,23 @@
                 <div style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; text-align: center;">
                     <div style="font-size: 0.875rem; opacity: 0.9;">🧠 Powered by Advanced Analytics</div>
                     <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Spatial clustering, temporal analysis, and predictive modeling</div>
+                </div>
+                
+                <!-- Prominent Close Button -->
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button onclick="closeAnalytics()" style="
+                        background: #6b7280; 
+                        color: white; 
+                        border: none; 
+                        padding: 0.75rem 2rem; 
+                        border-radius: 8px; 
+                        cursor: pointer; 
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">
+                        ← Close Analytics
+                    </button>
                 </div>
             `;
         }
