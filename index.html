@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2070,110 +2070,103 @@
         }
         
         function openPointsShop() {
-            const modal = document.createElement('div');
-            modal.className = 'modal-backdrop';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 500px;">
-                    <button class="modal-close-btn" onclick="this.closest('.modal-backdrop').remove()">
-                        <i data-lucide="x"></i>
-                    </button>
-                    <h3 style="color: #8b5cf6; margin-bottom: 1rem;">🛍️ Wellness Points Shop</h3>
-                    <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <div style="font-size: 1.125rem; color: #6b7280;">Current Points</div>
-                        <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${userPoints}</div>
-                    </div>
-                    
-                    <div class="shop-items" style="display: grid; gap: 1rem;">
-                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600; color: #1f2937;">🎯 Mood Boost Challenge</div>
-                                <div style="font-size: 0.875rem; color: #6b7280;">Unlock personalized mood exercises</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: bold; color: #8b5cf6;">50 points</div>
-                                <button class="shop-buy-btn" data-item="mood-boost" data-cost="50" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
-                                    ${userPoints >= 50 ? 'Buy' : 'Need ' + (50 - userPoints) + ' more'}
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600; color: #1f2937;">⚡ AR Streak Multiplier</div>
-                                <div style="font-size: 0.875rem; color: #6b7280;">Double points for next 3 scans</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: bold; color: #8b5cf6;">100 points</div>
-                                <button class="shop-buy-btn" data-item="streak-multiplier" data-cost="100" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
-                                    ${userPoints >= 100 ? 'Buy' : 'Need ' + (100 - userPoints) + ' more'}
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600; color: #1f2937;">📋 Personalized Wellness Guide</div>
-                                <div style="font-size: 0.875rem; color: #6b7280;">Custom wellness plan based on your scans</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: bold; color: #8b5cf6;">200 points</div>
-                                <button class="shop-buy-btn" data-item="wellness-guide" data-cost="200" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
-                                    ${userPoints >= 200 ? 'Buy' : 'Need ' + (200 - userPoints) + ' more'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                        <h4 style="color: #6b7280; margin-bottom: 0.5rem;">🏆 Your Achievements</h4>
-                        <div class="achievements-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            ${achievements.map(a => {
-                                const badges = {
-                                    'nature-explorer': '🌱 Nature Explorer',
-                                    'wellness-master': '🧘 Wellness Master',
-                                    'streak-champion': '🔥 Streak Champion'
-                                };
-                                return `<span style="background: #f3e8ff; color: #8b5cf6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">${badges[a] || a}</span>`;
-                            }).join('') || '<span style="color: #9ca3af; font-size: 0.875rem;">Complete AR scans to unlock achievements!</span>'}
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Prevent multiple modals
+            if (document.querySelector('.shop-modal-backdrop')) return;
             
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                opacity: 0;
-                animation: fadeIn 0.3s ease-out forwards;
-            `;
-            
-            document.body.appendChild(modal);
-            lucide.createIcons({ nodes: modal.querySelectorAll('[data-lucide]') });
-            
-            // Add buy button functionality
-            modal.querySelectorAll('.shop-buy-btn').forEach(btn => {
-                const cost = parseInt(btn.dataset.cost);
-                const item = btn.dataset.item;
+            try {
+                // Get current values safely
+                const currentPoints = parseInt(localStorage.getItem('wellnessPoints')) || 0;
+                const currentAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
                 
-                if (userPoints >= cost) {
+                const modal = document.createElement('div');
+                modal.className = 'shop-modal-backdrop';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                
+                const shopItems = [
+                    { id: 'mood-boost', name: '🎯 Mood Boost Challenge', desc: 'Unlock personalized mood exercises', cost: 50 },
+                    { id: 'streak-multiplier', name: '⚡ AR Streak Multiplier', desc: 'Double points for next 3 scans', cost: 100 },
+                    { id: 'wellness-guide', name: '📋 Personalized Wellness Guide', desc: 'Custom wellness plan based on your scans', cost: 200 }
+                ];
+                
+                let itemsHTML = '';
+                shopItems.forEach(item => {
+                    const canBuy = currentPoints >= item.cost;
+                    const buttonText = canBuy ? 'Buy' : `Need ${item.cost - currentPoints} more`;
+                    const buttonStyle = canBuy ? 'background: #8b5cf6; cursor: pointer;' : 'background: #9ca3af; cursor: not-allowed; opacity: 0.6;';
+                    
+                    itemsHTML += `
+                        <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937;">${item.name}</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">${item.desc}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #8b5cf6;">${item.cost} points</div>
+                                <button class="shop-buy-btn" data-item="${item.id}" data-cost="${item.cost}" ${!canBuy ? 'disabled' : ''} 
+                                    style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; ${buttonStyle}">
+                                    ${buttonText}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="color: #8b5cf6; margin: 0;">🛍️ Wellness Points Shop</h3>
+                            <button class="close-shop-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                        </div>
+                        
+                        <div style="text-align: center; margin-bottom: 1.5rem;">
+                            <div style="font-size: 1.125rem; color: #6b7280;">Current Points</div>
+                            <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${currentPoints}</div>
+                        </div>
+                        
+                        ${itemsHTML}
+                        
+                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center;">
+                            <div style="color: #6b7280; font-size: 0.875rem;">Complete AR scans and mood tracking to earn more points!</div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add close functionality
+                modal.querySelector('.close-shop-btn').addEventListener('click', () => {
+                    modal.remove();
+                });
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+                
+                // Add buy button functionality
+                modal.querySelectorAll('.shop-buy-btn:not([disabled])').forEach(btn => {
                     btn.addEventListener('click', () => {
+                        const cost = parseInt(btn.dataset.cost);
+                        const item = btn.dataset.item;
                         purchaseItem(item, cost);
                         modal.remove();
                     });
-                } else {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
-                }
-            });
+                });
+                
+            } catch (error) {
+                console.error('Error opening shop:', error);
+                showNotification('Unable to open shop. Please try again.', 'error');
+            }
         }
         
         function purchaseItem(item, cost) {
