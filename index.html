@@ -16,8 +16,24 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Load configuration -->
-    <script src="config.js"></script>
+    <!-- Load configuration inline for demo -->
+    <script>
+        // Inline config for demo - REPLACE WITH YOUR KEYS
+        window.CONFIG = {
+            googleMaps: {
+                apiKey: 'AIzaSyDll2jvuvURfgbfs9JV4Iiuoh1IYBKsztU'
+            },
+            firebase: {
+                apiKey: 'AIzaSyC-2qIR03QzfDZ5AHCa8q7Y503y2tnKe7g',
+                authDomain: 'mindmap-mental-health-1d8f7.firebaseapp.com',
+                projectId: 'mindmap-mental-health-1d8f7',
+                storageBucket: 'mindmap-mental-health-1d8f7.firebasestorage.app',
+                messagingSenderId: '793337509337',
+                appId: '1:793337509337:web:46ffb3bb243cb1f9f615c8'
+            }
+        };
+        console.log('✅ Config loaded inline');
+    </script>
     <!-- TensorFlow.js for AI-powered object detection -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>
