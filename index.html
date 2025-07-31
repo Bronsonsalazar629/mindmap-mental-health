@@ -425,41 +425,28 @@
             <span>Search taking longer than expected. Please wait...</span>
         </div>
     </div> 
-    <!-- Google Maps API - Now loaded securely from config -->
+    <!-- Google Maps API - Direct load for demo -->
     <script>
-        // Wait for config to load, then initialize everything
-        function initializeApp() {
-            if (!window.CONFIG) {
-                console.error('Config not loaded! Make sure config.js exists and is working.');
-                return;
-            }
-            
-            // Load Google Maps API with secure config
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.googleMaps.apiKey}&libraries=places,visualization,marker&callback=initMap&loading=async`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-            
-            // Initialize Firebase with secure config
-            firebase.initializeApp(window.CONFIG.firebase);
-            
-            // Initialize Firebase services
-            window.db = firebase.firestore();
-            window.auth = firebase.auth();
-            db = window.db;
-            auth = window.auth;
-            
-            // Start authentication after Firebase is ready
-            initializeAuth();
-        }
-        
-        // Initialize when page loads
-        window.addEventListener('load', initializeApp);
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDll2jvuvURfgbfs9JV4Iiuoh1IYBKsztU&libraries=places,visualization,marker&callback=initMap&loading=async`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
     </script>
     <script>
-        // Initialize Firebase variables after config loads
-        let db, auth;
+        // Direct Firebase initialization for demo
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-2qIR03QzfDZ5AHCa8q7Y503y2tnKe7g",
+            authDomain: "mindmap-mental-health-1d8f7.firebaseapp.com",
+            projectId: "mindmap-mental-health-1d8f7",
+            storageBucket: "mindmap-mental-health-1d8f7.firebasestorage.app",
+            messagingSenderId: "793337509337",
+            appId: "1:793337509337:web:46ffb3bb243cb1f9f615c8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
         
         // Set up anonymous authentication
         let isAuthInitialized = false;
