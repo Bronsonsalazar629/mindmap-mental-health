@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MindMap">
     <title>MindMap: Mental Health Geography</title>
     <link rel="stylesheet" href="style.css">
     <!-- Inter font -->
@@ -572,6 +575,241 @@
             lucide.createIcons();
         }
 
+        // 🎓 MIT-LEVEL ADVANCED ANALYTICS
+        function calculateAdvancedAnalytics(data) {
+            const analytics = {
+                trendAnalysis: calculateTrend(data),
+                spatialClusters: calculateSpatialClusters(data),
+                temporalPatterns: calculateTemporalPatterns(data),
+                wellnessScore: calculateWellnessScore(data),
+                predictions: predictMoodTrends(data),
+                correlations: calculateEnvironmentalCorrelations(data)
+            };
+            
+            return analytics;
+        }
+        
+        function calculateTrend(data) {
+            if (data.length < 2) return { slope: 0, direction: 'stable', confidence: 0 };
+            
+            const n = data.length;
+            const xMean = (n - 1) / 2;
+            const yMean = data.reduce((sum, d) => sum + d.mood, 0) / n;
+            
+            let numerator = 0;
+            let denominator = 0;
+            
+            data.forEach((d, i) => {
+                const xDiff = i - xMean;
+                const yDiff = d.mood - yMean;
+                numerator += xDiff * yDiff;
+                denominator += xDiff * xDiff;
+            });
+            
+            const slope = denominator !== 0 ? numerator / denominator : 0;
+            const direction = slope > 0.1 ? 'improving' : slope < -0.1 ? 'declining' : 'stable';
+            const confidence = Math.min(Math.abs(slope) * 100, 95);
+            
+            return { slope, direction, confidence };
+        }
+        
+        function calculateSpatialClusters(data) {
+            const clusters = [];
+            const processed = new Set();
+            
+            data.forEach((point, i) => {
+                if (processed.has(i)) return;
+                
+                const cluster = [point];
+                processed.add(i);
+                
+                data.forEach((other, j) => {
+                    if (i === j || processed.has(j)) return;
+                    
+                    const distance = calculateDistance(
+                        point.location.latitude, point.location.longitude,
+                        other.location.latitude, other.location.longitude
+                    );
+                    
+                    if (distance < 0.5) { // 500m radius
+                        cluster.push(other);
+                        processed.add(j);
+                    }
+                });
+                
+                if (cluster.length > 1) {
+                    const avgMood = cluster.reduce((sum, p) => sum + p.mood, 0) / cluster.length;
+                    clusters.push({
+                        center: {
+                            lat: cluster.reduce((sum, p) => sum + p.location.latitude, 0) / cluster.length,
+                            lng: cluster.reduce((sum, p) => sum + p.location.longitude, 0) / cluster.length
+                        },
+                        avgMood,
+                        count: cluster.length,
+                        type: avgMood >= 4 ? 'wellness-hotspot' : avgMood <= 2 ? 'stress-zone' : 'neutral'
+                    });
+                }
+            });
+            
+            return clusters;
+        }
+        
+        function calculateTemporalPatterns(data) {
+            const hourlyMoods = Array(24).fill().map(() => []);
+            const dailyMoods = Array(7).fill().map(() => []);
+            
+            data.forEach(d => {
+                const date = new Date(d.timestamp);
+                hourlyMoods[date.getHours()].push(d.mood);
+                dailyMoods[date.getDay()].push(d.mood);
+            });
+            
+            const hourlyAvg = hourlyMoods.map(moods => 
+                moods.length > 0 ? moods.reduce((a, b) => a + b) / moods.length : 0
+            );
+            
+            const dailyAvg = dailyMoods.map(moods => 
+                moods.length > 0 ? moods.reduce((a, b) => a + b) / moods.length : 0
+            );
+            
+            const peakHour = hourlyAvg.indexOf(Math.max(...hourlyAvg));
+            const peakDay = dailyAvg.indexOf(Math.max(...dailyAvg));
+            
+            return { hourlyAvg, dailyAvg, peakHour, peakDay };
+        }
+        
+        function calculateWellnessScore(data) {
+            if (data.length === 0) return 0;
+            
+            const recentData = data.slice(-7); // Last 7 entries
+            const avgMood = recentData.reduce((sum, d) => sum + d.mood, 0) / recentData.length;
+            const consistency = 1 - (Math.sqrt(recentData.reduce((sum, d) => sum + Math.pow(d.mood - avgMood, 2), 0) / recentData.length) / 2);
+            const trend = calculateTrend(recentData);
+            const trendBonus = trend.direction === 'improving' ? 0.2 : trend.direction === 'declining' ? -0.2 : 0;
+            
+            return Math.min(Math.max((avgMood / 5 * 0.6 + consistency * 0.3 + trendBonus) * 100, 0), 100);
+        }
+        
+        function predictMoodTrends(data) {
+            if (data.length < 5) return { nextMood: 3, confidence: 0, recommendation: 'Need more data for predictions' };
+            
+            const recent = data.slice(-5);
+            const weights = [0.1, 0.15, 0.2, 0.25, 0.3]; // More weight to recent data
+            const weightedAvg = recent.reduce((sum, d, i) => sum + d.mood * weights[i], 0);
+            
+            const trend = calculateTrend(recent);
+            const prediction = Math.max(1, Math.min(5, weightedAvg + trend.slope * 2));
+            
+            let recommendation = '';
+            if (prediction < 2.5) {
+                recommendation = 'Consider visiting wellness locations or practicing mindfulness';
+            } else if (prediction > 4) {
+                recommendation = 'Great trend! Keep up your current wellness routine';
+            } else {
+                recommendation = 'Maintain balance with regular wellness activities';
+            }
+            
+            return { nextMood: prediction, confidence: trend.confidence, recommendation };
+        }
+        
+        function calculateEnvironmentalCorrelations(data) {
+            // Simplified environmental correlation analysis
+            const timeOfDayEffect = data.reduce((acc, d) => {
+                const hour = new Date(d.timestamp).getHours();
+                const timeOfDay = hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+                if (!acc[timeOfDay]) acc[timeOfDay] = [];
+                acc[timeOfDay].push(d.mood);
+                return acc;
+            }, {});
+            
+            const correlations = {};
+            Object.keys(timeOfDayEffect).forEach(time => {
+                const moods = timeOfDayEffect[time];
+                correlations[time] = moods.reduce((a, b) => a + b) / moods.length;
+            });
+            
+            return correlations;
+        }
+
+        // 🎬 DEMO DATA GENERATOR FOR SHOWCASE
+        function generateDemoData() {
+            if (confirm('Generate sample data for demonstration? This will add realistic mood entries to showcase the analytics.')) {
+                const demoEntries = [];
+                const now = new Date();
+                
+                // Generate 30 days of realistic demo data
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+                    const hour = 9 + Math.floor(Math.random() * 12); // 9 AM - 9 PM
+                    date.setHours(hour, Math.floor(Math.random() * 60));
+                    
+                    // Realistic mood patterns
+                    let baseMood = 3.2; // Slightly above neutral
+                    
+                    // Weekly patterns (weekends slightly better)
+                    if (date.getDay() === 0 || date.getDay() === 6) baseMood += 0.3;
+                    
+                    // Time of day patterns (mornings and evenings better)
+                    if (hour < 12 || hour > 18) baseMood += 0.2;
+                    
+                    // Add some randomness and trends
+                    const trendFactor = (29 - i) * 0.01; // Slight upward trend
+                    const randomFactor = (Math.random() - 0.5) * 1.2;
+                    
+                    const mood = Math.max(1, Math.min(5, Math.round((baseMood + trendFactor + randomFactor) * 10) / 10));
+                    
+                    // Generate realistic coordinates around a city center
+                    const baseLat = 40.7589 + (Math.random() - 0.5) * 0.1; // NYC area
+                    const baseLng = -73.9851 + (Math.random() - 0.5) * 0.1;
+                    
+                    demoEntries.push({
+                        mood: mood,
+                        description: ['Great day!', 'Feeling good', 'Pretty normal', 'Could be better', 'Rough day'][Math.floor(mood) - 1] || 'Okay',
+                        location: {
+                            latitude: baseLat,
+                            longitude: baseLng
+                        },
+                        timestamp: date,
+                        isDemo: true
+                    });
+                }
+                
+                // Add demo data to existing data
+                moodData = [...moodData, ...demoEntries];
+                
+                // Update displays
+                updatePointsDisplay();
+                showNotification('✨ Demo data generated! Check your analytics for advanced insights.', 'success');
+                
+                console.log('🎬 Generated', demoEntries.length, 'demo entries for showcase');
+            }
+        }
+        
+        // Add demo button to UI (for development/demo purposes)
+        function addDemoButton() {
+            const demoBtn = document.createElement('button');
+            demoBtn.innerHTML = '🎬 Demo Data';
+            demoBtn.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: #8b5cf6;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.875rem;
+                z-index: 10000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            `;
+            demoBtn.onclick = generateDemoData;
+            document.body.appendChild(demoBtn);
+        }
+        
+        // Initialize demo button for showcase
+        setTimeout(addDemoButton, 2000);
+
         // Enhanced Mood Tracker with descriptions
         let selectedMood = null;
 
@@ -854,9 +1092,18 @@
 
         function updateAnalytics() {
             if (moodData.length === 0) {
-                document.getElementById('insights-text').textContent = 'No mood data available yet. Start tracking your mood to see insights!';
+                document.getElementById('insights-text').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                        <h4>No Data Yet</h4>
+                        <p>Start tracking your mood and using AR wellness to see advanced analytics!</p>
+                    </div>
+                `;
                 return;
             }
+            
+            // Advanced analytics calculations
+            const analytics = calculateAdvancedAnalytics(moodData);
             
             const ctx = document.getElementById('mood-chart').getContext('2d');
             if (moodChart) {
@@ -900,11 +1147,114 @@
             const avgMood = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(1);
             const trend = data.length > 1 ? (data[data.length - 1] - data[0] > 0 ? 'improving' : 'declining') : 'stable';
             
+            // 🎓 ADVANCED INSIGHTS DISPLAY
             document.getElementById('insights-text').innerHTML = `
-                <p><strong>Average mood this week:</strong> ${avgMood}/5</p>
-                <p><strong>Trend:</strong> Your mood appears to be ${trend} over the past week.</p>
-                <p><strong>Total entries:</strong> ${moodData.length}</p>
-                <p style="margin-top: 1rem; font-style: italic;">Keep tracking your mood to get more detailed insights about patterns and triggers.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    
+                    <!-- Wellness Score Card -->
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">${Math.round(analytics.wellnessScore)}%</div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">Overall Wellness Score</div>
+                        <div style="font-size: 0.75rem; margin-top: 0.5rem; opacity: 0.8;">
+                            ${analytics.trendAnalysis.direction === 'improving' ? '📈 Improving' : 
+                              analytics.trendAnalysis.direction === 'declining' ? '📉 Needs attention' : '📊 Stable'}
+                        </div>
+                    </div>
+                    
+                    <!-- Trend Analysis -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">📈 Trend Analysis</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Direction:</strong> ${analytics.trendAnalysis.direction}</div>
+                            <div><strong>Confidence:</strong> ${Math.round(analytics.trendAnalysis.confidence)}%</div>
+                            <div style="margin-top: 0.5rem; padding: 0.75rem; background: ${analytics.trendAnalysis.direction === 'improving' ? '#f0fdf4' : analytics.trendAnalysis.direction === 'declining' ? '#fef2f2' : '#f8fafc'}; border-radius: 6px; font-size: 0.8rem;">
+                                ${analytics.trendAnalysis.direction === 'improving' ? '✨ Your wellness is trending upward!' : 
+                                  analytics.trendAnalysis.direction === 'declining' ? '⚠️ Consider focusing on self-care activities' : 
+                                  '📊 Your mood remains consistent'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Predictions -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🔮 AI Predictions</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Predicted next mood:</strong> ${analytics.predictions.nextMood.toFixed(1)}/5</div>
+                            <div><strong>Confidence:</strong> ${Math.round(analytics.predictions.confidence)}%</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 6px; font-size: 0.8rem; border-left: 3px solid #3b82f6;">
+                                💡 ${analytics.predictions.recommendation}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Spatial Insights -->
+                    ${analytics.spatialClusters.length > 0 ? `
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🗺️ Spatial Patterns</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Wellness hotspots found:</strong> ${analytics.spatialClusters.filter(c => c.type === 'wellness-hotspot').length}</div>
+                            <div><strong>Areas to avoid:</strong> ${analytics.spatialClusters.filter(c => c.type === 'stress-zone').length}</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-radius: 6px; font-size: 0.8rem;">
+                                📍 Check your map for highlighted wellness zones!
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Temporal Patterns -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">⏰ Best Times</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Peak mood hour:</strong> ${analytics.temporalPatterns.peakHour}:00</div>
+                            <div><strong>Best day:</strong> ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][analytics.temporalPatterns.peakDay]}</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; font-size: 0.8rem;">
+                                ⏰ Schedule important activities during your peak times!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental Correlations -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🌍 Environmental Impact</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            ${Object.entries(analytics.correlations).map(([time, mood]) => 
+                                `<div><strong>${time.charAt(0).toUpperCase() + time.slice(1)}:</strong> ${mood.toFixed(1)}/5</div>`
+                            ).join('')}
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 6px; font-size: 0.8rem;">
+                                🌟 Your mood varies throughout the day - use this insight for better planning!
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Summary Stats -->
+                <div style="background: var(--bg-color); padding: 1.5rem; border-radius: 12px; margin-top: 1rem;">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">📊 Data Summary</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #8b5cf6;">${moodData.length}</div>
+                            <div style="color: var(--text-secondary);">Total Entries</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">${avgMood}/5</div>
+                            <div style="color: var(--text-secondary);">Avg Mood</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">${Math.max(...moodData.map(d => d.mood))}/5</div>
+                            <div style="color: var(--text-secondary);">Peak Mood</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">${Math.min(...moodData.map(d => d.mood))}/5</div>
+                            <div style="color: var(--text-secondary);">Lowest Mood</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.875rem; opacity: 0.9;">🧠 Powered by Advanced Analytics</div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Spatial clustering, temporal analysis, and predictive modeling</div>
+                </div>
             `;
         }
 
@@ -2122,30 +2472,51 @@
                     `;
                 });
                 
-                modal.innerHTML = `
-                    <div style="background: white; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="color: #8b5cf6; margin: 0;">🛍️ Wellness Points Shop</h3>
-                            <button class="close-shop-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-                        </div>
-                        
-                        <div style="text-align: center; margin-bottom: 1.5rem;">
-                            <div style="font-size: 1.125rem; color: #6b7280;">Current Points</div>
-                            <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${currentPoints}</div>
-                        </div>
-                        
-                        ${itemsHTML}
-                        
-                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center;">
-                            <div style="color: #6b7280; font-size: 0.875rem;">Complete AR scans and mood tracking to earn more points!</div>
-                        </div>
-                    </div>
-                `;
+                // Create modal content using DOM methods instead of innerHTML
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = 'background: white; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;';
+                
+                // Header
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;';
+                
+                const title = document.createElement('h3');
+                title.style.cssText = 'color: #8b5cf6; margin: 0;';
+                title.textContent = '🛍️ Wellness Points Shop';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'close-shop-btn';
+                closeBtn.style.cssText = 'background: none; border: none; font-size: 1.5rem; cursor: pointer;';
+                closeBtn.textContent = '×';
+                
+                header.appendChild(title);
+                header.appendChild(closeBtn);
+                
+                // Points display
+                const pointsSection = document.createElement('div');
+                pointsSection.style.cssText = 'text-align: center; margin-bottom: 1.5rem;';
+                pointsSection.innerHTML = '<div style="font-size: 1.125rem; color: #6b7280;">Current Points</div><div style="font-size: 2rem; font-weight: bold; color: #10b981;">' + currentPoints + '</div>';
+                
+                // Items container
+                const itemsContainer = document.createElement('div');
+                itemsContainer.innerHTML = itemsHTML;
+                
+                // Footer
+                const footer = document.createElement('div');
+                footer.style.cssText = 'margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center;';
+                footer.innerHTML = '<div style="color: #6b7280; font-size: 0.875rem;">Complete AR scans and mood tracking to earn more points!</div>';
+                
+                // Assemble modal
+                modalContent.appendChild(header);
+                modalContent.appendChild(pointsSection);
+                modalContent.appendChild(itemsContainer);
+                modalContent.appendChild(footer);
+                modal.appendChild(modalContent);
                 
                 document.body.appendChild(modal);
                 
                 // Add close functionality
-                modal.querySelector('.close-shop-btn').addEventListener('click', () => {
+                closeBtn.addEventListener('click', () => {
                     modal.remove();
                 });
                 
@@ -2218,6 +2589,60 @@
         
         // Initialize points system on load
         document.addEventListener('DOMContentLoaded', initializePointsSystem);
+        
+        // Service Worker registration for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'mindmap-v1';
+                    const urlsToCache = ['/', '/index.html'];
+                    
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('✅ Service Worker registered for offline support'))
+                    .catch(err => console.log('❌ Service Worker registration failed:', err));
+            });
+        }
+        
+        // Prevent app from sleeping on mobile devices
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('🔋 Screen wake lock active');
+                }
+            } catch (err) {
+                console.log('⚡ Wake lock not supported or failed:', err);
+            }
+        }
+        
+        // Re-acquire wake lock when app becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && wakeLock === null) {
+                requestWakeLock();
+            }
+        });
+        
+        // Initial wake lock request
+        window.addEventListener('load', requestWakeLock);
     </script>
     <style>
         :root {
@@ -2249,6 +2674,25 @@
 
         body {
             display: flex;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+        }
+        
+        /* iPhone-specific optimizations */
+        @supports (-webkit-appearance: none) and (stroke-color: transparent) {
+            .sidebar {
+                padding-top: max(1rem, env(safe-area-inset-top));
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+                padding-left: max(1rem, env(safe-area-inset-left));
+            }
+            
+            #map {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-right: env(safe-area-inset-right);
+            }
         }
 
         .sidebar {
@@ -2259,7 +2703,8 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            z-index: 10;
+            z-index: 1000;
+            position: relative;
             transition: transform 0.3s ease;
         }
 
@@ -2695,6 +3140,8 @@
             margin-top: 1rem;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            position: relative;
         }
 
         .camera-header {
