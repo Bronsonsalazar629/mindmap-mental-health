@@ -239,6 +239,20 @@
             <span>AR Wellness</span>
         </button>
         
+        <!-- Wellness Points Display -->
+        <div id="wellness-points-display" class="points-display">
+            <div class="points-header">
+                <span>🌟 Wellness Points</span>
+                <button id="points-shop" class="points-shop-btn">🛍️</button>
+            </div>
+            <div class="points-value">
+                <span id="user-points">0</span>
+            </div>
+            <div class="points-streak">
+                Daily streak: <span id="daily-streak">0</span> days
+            </div>
+        </div>
+        
         <!-- Live Camera Preview in Sidebar -->
         <div id="sidebar-camera" class="sidebar-camera" style="display: none;">
             <div class="camera-header">
@@ -291,6 +305,72 @@
                                 <div id="elements-list" class="elements-list">Scanning...</div>
                             </div>
                             <div class="wellness-tips" id="wellness-tips"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Points Shop Modal -->
+        <div id="points-shop-modal" class="modal-backdrop" style="display: none;">
+            <div class="shop-modal-content">
+                <div class="shop-header">
+                    <h3>🛍️ Wellness Points Shop</h3>
+                    <div class="user-points-display">
+                        <span id="shop-user-points">0</span> points
+                    </div>
+                    <button class="close-btn" id="close-shop">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="shop-content">
+                    <div class="shop-category">
+                        <h4>🎯 Challenges & Rewards</h4>
+                        <div class="shop-items">
+                            <div class="shop-item" data-cost="50" data-item="mood-boost">
+                                <div class="item-icon">😊</div>
+                                <div class="item-info">
+                                    <div class="item-name">Mood Boost Challenge</div>
+                                    <div class="item-desc">Get personalized mood-boosting activities</div>
+                                    <div class="item-cost">50 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                            <div class="shop-item" data-cost="100" data-item="ar-streak">
+                                <div class="item-icon">🔥</div>
+                                <div class="item-info">
+                                    <div class="item-name">AR Streak Multiplier</div>
+                                    <div class="item-desc">Double points for 7 days</div>
+                                    <div class="item-cost">100 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                            <div class="shop-item" data-cost="200" data-item="wellness-guide">
+                                <div class="item-icon">📖</div>
+                                <div class="item-info">
+                                    <div class="item-name">Personalized Wellness Guide</div>
+                                    <div class="item-desc">Custom wellness plan based on your AR data</div>
+                                    <div class="item-cost">200 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shop-category">
+                        <h4>🏆 Achievements</h4>
+                        <div class="achievements-grid">
+                            <div class="achievement" data-req="100" id="nature-explorer">
+                                <div class="achievement-icon">🌳</div>
+                                <div class="achievement-name">Nature Explorer</div>
+                                <div class="achievement-desc">Scan 50 nature elements</div>
+                                <div class="achievement-progress">0/50</div>
+                            </div>
+                            <div class="achievement" data-req="200" id="wellness-master">
+                                <div class="achievement-icon">🧘</div>
+                                <div class="achievement-name">Wellness Master</div>
+                                <div class="achievement-desc">Reach 1000 total wellness points</div>
+                                <div class="achievement-progress">0/1000</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -485,6 +565,7 @@
             document.getElementById('toggle-heatmap').addEventListener('click', toggleMoodHeatmap);
             document.getElementById('toggle-community-heatmap').addEventListener('click', toggleCommunityMoodHeatmap);
             document.getElementById('ar-wellness').addEventListener('click', openARWellness);
+            document.getElementById('points-shop').addEventListener('click', openPointsShop);
             document.getElementById('view-insights').addEventListener('click', showAnalytics);
             document.getElementById('close-analytics-panel').addEventListener('click', closeAnalytics);
             
@@ -1847,6 +1928,303 @@
                 loadCommunityMoodHeatmap();
             }
         }
+
+        // 🎮 GAMIFIED POINTS SYSTEM
+        
+        let userPoints = parseInt(localStorage.getItem('wellnessPoints')) || 0;
+        let dailyStreak = parseInt(localStorage.getItem('dailyStreak')) || 0;
+        let lastScanDate = localStorage.getItem('lastScanDate') || '';
+        let totalARScans = parseInt(localStorage.getItem('totalARScans')) || 0;
+        let achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+        
+        // Initialize points display
+        function initializePointsSystem() {
+            updatePointsDisplay();
+        }
+        
+        function updatePointsDisplay() {
+            document.getElementById('user-points').textContent = userPoints;
+            
+            // Update daily streak
+            const today = new Date().toDateString();
+            if (lastScanDate !== today) {
+                // Check if streak should continue (yesterday) or reset
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (lastScanDate === yesterday.toDateString()) {
+                    dailyStreak += 1;
+                } else if (lastScanDate !== today) {
+                    dailyStreak = 0;
+                }
+                
+                lastScanDate = today;
+                localStorage.setItem('lastScanDate', lastScanDate);
+                localStorage.setItem('dailyStreak', dailyStreak);
+            }
+        }
+        
+        function earnPoints(amount, reason = 'AR Scan') {
+            userPoints += amount;
+            totalARScans += 1;
+            
+            // Save to localStorage
+            localStorage.setItem('wellnessPoints', userPoints);
+            localStorage.setItem('totalARScans', totalARScans);
+            
+            // Update display
+            updatePointsDisplay();
+            
+            // Show points earned notification
+            showPointsNotification(amount, reason);
+            
+            // Check for achievements
+            checkAchievements();
+        }
+        
+        function showPointsNotification(points, reason) {
+            const notification = document.createElement('div');
+            notification.className = 'points-notification';
+            notification.innerHTML = `
+                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                    <span>🌟</span>
+                    <span>+${points} points from ${reason}!</span>
+                </div>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out forwards;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+        
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            // Nature Explorer Achievement
+            if (totalARScans >= 10 && !achievements.includes('nature-explorer')) {
+                achievements.push('nature-explorer');
+                newAchievements.push('Nature Explorer - Completed 10 AR scans!');
+            }
+            
+            // Wellness Master Achievement
+            if (totalARScans >= 50 && !achievements.includes('wellness-master')) {
+                achievements.push('wellness-master');
+                newAchievements.push('Wellness Master - Completed 50 AR scans!');
+            }
+            
+            // Streak Champion Achievement
+            if (dailyStreak >= 7 && !achievements.includes('streak-champion')) {
+                achievements.push('streak-champion');
+                newAchievements.push('Streak Champion - 7 day scanning streak!');
+            }
+            
+            // Save achievements
+            if (newAchievements.length > 0) {
+                localStorage.setItem('achievements', JSON.stringify(achievements));
+                
+                // Show achievement notification
+                newAchievements.forEach(achievement => {
+                    setTimeout(() => showAchievementNotification(achievement), 1000);
+                });
+            }
+        }
+        
+        function showAchievementNotification(achievement) {
+            const notification = document.createElement('div');
+            notification.className = 'achievement-notification';
+            notification.innerHTML = `
+                <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 1rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; min-width: 300px;">
+                    <span style="font-size: 1.5rem;">🏆</span>
+                    <div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">Achievement Unlocked!</div>
+                        <div>${achievement}</div>
+                    </div>
+                </div>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 4rem;
+                right: 1rem;
+                z-index: 10000;
+                animation: achievementPop 0.5s ease-out forwards;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+        
+        function openPointsShop() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-backdrop';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <button class="modal-close-btn" onclick="this.closest('.modal-backdrop').remove()">
+                        <i data-lucide="x"></i>
+                    </button>
+                    <h3 style="color: #8b5cf6; margin-bottom: 1rem;">🛍️ Wellness Points Shop</h3>
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div style="font-size: 1.125rem; color: #6b7280;">Current Points</div>
+                        <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${userPoints}</div>
+                    </div>
+                    
+                    <div class="shop-items" style="display: grid; gap: 1rem;">
+                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937;">🎯 Mood Boost Challenge</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Unlock personalized mood exercises</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #8b5cf6;">50 points</div>
+                                <button class="shop-buy-btn" data-item="mood-boost" data-cost="50" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
+                                    ${userPoints >= 50 ? 'Buy' : 'Need ' + (50 - userPoints) + ' more'}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937;">⚡ AR Streak Multiplier</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Double points for next 3 scans</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #8b5cf6;">100 points</div>
+                                <button class="shop-buy-btn" data-item="streak-multiplier" data-cost="100" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
+                                    ${userPoints >= 100 ? 'Buy' : 'Need ' + (100 - userPoints) + ' more'}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="shop-item" style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937;">📋 Personalized Wellness Guide</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">Custom wellness plan based on your scans</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #8b5cf6;">200 points</div>
+                                <button class="shop-buy-btn" data-item="wellness-guide" data-cost="200" style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
+                                    ${userPoints >= 200 ? 'Buy' : 'Need ' + (200 - userPoints) + ' more'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                        <h4 style="color: #6b7280; margin-bottom: 0.5rem;">🏆 Your Achievements</h4>
+                        <div class="achievements-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${achievements.map(a => {
+                                const badges = {
+                                    'nature-explorer': '🌱 Nature Explorer',
+                                    'wellness-master': '🧘 Wellness Master',
+                                    'streak-champion': '🔥 Streak Champion'
+                                };
+                                return `<span style="background: #f3e8ff; color: #8b5cf6; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">${badges[a] || a}</span>`;
+                            }).join('') || '<span style="color: #9ca3af; font-size: 0.875rem;">Complete AR scans to unlock achievements!</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                opacity: 0;
+                animation: fadeIn 0.3s ease-out forwards;
+            `;
+            
+            document.body.appendChild(modal);
+            lucide.createIcons({ nodes: modal.querySelectorAll('[data-lucide]') });
+            
+            // Add buy button functionality
+            modal.querySelectorAll('.shop-buy-btn').forEach(btn => {
+                const cost = parseInt(btn.dataset.cost);
+                const item = btn.dataset.item;
+                
+                if (userPoints >= cost) {
+                    btn.addEventListener('click', () => {
+                        purchaseItem(item, cost);
+                        modal.remove();
+                    });
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
+        }
+        
+        function purchaseItem(item, cost) {
+            userPoints -= cost;
+            localStorage.setItem('wellnessPoints', userPoints);
+            updatePointsDisplay();
+            
+            const items = {
+                'mood-boost': '🎯 Mood Boost Challenge unlocked!',
+                'streak-multiplier': '⚡ AR Streak Multiplier activated!',
+                'wellness-guide': '📋 Personalized Wellness Guide unlocked!'
+            };
+            
+            showNotification(items[item] || 'Item purchased!', 'success');
+        }
+        
+        // Modified sidebar wellness detection to award points
+        function updateSidebarWellnessDisplay(totalScore, elements) {
+            const scoreElement = document.getElementById('sidebar-wellness-score');
+            const itemsElement = document.querySelector('.items-scroll');
+            
+            // Update score
+            scoreElement.textContent = Math.max(0, totalScore);
+            scoreElement.style.color = totalScore > 20 ? '#10b981' : totalScore > 10 ? '#f59e0b' : totalScore > 0 ? '#6b7280' : '#ef4444';
+            
+            // Award points for positive wellness scores
+            if (totalScore > 0 && elements.some(e => e.score > 5)) {
+                const pointsEarned = Math.min(totalScore, 10); // Cap at 10 points per scan
+                earnPoints(pointsEarned, 'Wellness Scan');
+            }
+            
+            // Update detected items
+            if (elements.length > 0) {
+                const itemsList = elements
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 3) // Show top 3
+                    .map(e => {
+                        const emoji = getElementEmoji(e.object);
+                        const scoreText = e.score > 0 ? `+${e.score}` : `${e.score}`;
+                        return `${emoji} ${e.object} (${scoreText})`;
+                    })
+                    .join('<br>');
+                
+                itemsElement.innerHTML = itemsList;
+            } else {
+                itemsElement.innerHTML = 'Scanning environment...';
+            }
+        }
+        
+        // Initialize points system on load
+        document.addEventListener('DOMContentLoaded', initializePointsSystem);
     </script>
     <style>
         :root {
@@ -2416,6 +2794,191 @@
             color: var(--text-primary);
         }
 
+        /* Points System Styles */
+        .points-display {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .points-shop-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .points-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .points-streak {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Shop Modal Styles */
+        .shop-modal-content {
+            background: var(--surface-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .user-points-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .shop-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(80vh - 100px);
+        }
+
+        .shop-category {
+            margin-bottom: 2rem;
+        }
+
+        .shop-category h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .shop-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .shop-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .item-icon {
+            font-size: 2rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .item-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .item-cost {
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
+        .buy-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .buy-btn:hover {
+            background: #059669;
+        }
+
+        .buy-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .achievement {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .achievement.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-progress {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
         @media (max-width: 768px) {
             .ar-modal-content {
                 width: 95%;
@@ -2433,10 +2996,33 @@
 
             .sidebar-camera {
                 margin-top: 0.5rem;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 95vw;
+                max-width: 400px;
+                z-index: 1000;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             }
 
             .camera-preview-container {
-                aspect-ratio: 16/12;
+                aspect-ratio: 4/3;
+                min-height: 300px;
+            }
+
+            .camera-header {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+
+            .detected-items {
+                padding: 1rem;
+                max-height: 150px;
+            }
+
+            .items-scroll {
+                font-size: 0.9rem;
             }
         }
 
