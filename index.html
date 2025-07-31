@@ -453,8 +453,28 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        
+        // Initialize Firestore with error handling
+        let db, auth;
+        try {
+            db = firebase.firestore();
+            auth = firebase.auth();
+            
+            // Set offline persistence and handle connection issues
+            db.enablePersistence({ synchronizeTabs: true })
+                .catch((err) => {
+                    if (err.code == 'failed-precondition') {
+                        console.warn('Firestore persistence failed - multiple tabs open');
+                    } else if (err.code == 'unimplemented') {
+                        console.warn('Firestore persistence not supported');
+                    }
+                });
+        } catch (error) {
+            console.error('Firestore initialization error:', error);
+            // Create mock objects to prevent crashes
+            db = { collection: () => ({ add: () => Promise.resolve(), get: () => Promise.resolve({ forEach: () => {} }) }) };
+            auth = { onAuthStateChanged: () => {}, signInAnonymously: () => Promise.resolve() };
+        }
         
         // Set up anonymous authentication
         let isAuthInitialized = false;
@@ -3075,11 +3095,20 @@
             z-index: 999;
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            overflow-x: hidden;
             padding: 1.5rem;
         }
 
         .panel:not(.hidden) {
             transform: translateX(0);
+        }
+
+        .panel-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
         .panel-content h3 {
@@ -3113,8 +3142,10 @@
             bottom: 0;
             background: var(--surface-color);
             padding: 1.5rem;
-            margin: 1.5rem -1.5rem -1.5rem -1.5rem;
+            margin: 1.5rem -1.5rem 0 -1.5rem;
             border-top: 1px solid var(--border-color);
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .analytics-exit-btn {
@@ -3198,6 +3229,9 @@
             color: var(--text-secondary);
             line-height: 1.6;
             min-height: 100px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 350px);
         }
 
         #view-insights {
