@@ -604,16 +604,28 @@
         }
         
         function calculateAdvancedAnalytics(data) {
-            const analytics = {
-                trendAnalysis: calculateTrend(data),
-                spatialClusters: calculateSpatialClusters(data),
-                temporalPatterns: calculateTemporalPatterns(data),
-                wellnessScore: calculateWellnessScore(data),
-                predictions: predictMoodTrends(data),
-                correlations: calculateEnvironmentalCorrelations(data)
-            };
-            
-            return analytics;
+            try {
+                const analytics = {
+                    trendAnalysis: calculateTrend(data) || { slope: 0, direction: 'stable', confidence: 0 },
+                    spatialClusters: calculateSpatialClusters(data) || [],
+                    temporalPatterns: calculateTemporalPatterns(data) || { hourlyAvg: [], dailyAvg: [], peakHour: 12, peakDay: 0 },
+                    wellnessScore: calculateWellnessScore(data) || 50,
+                    predictions: predictMoodTrends(data) || { nextMood: 3, confidence: 0, recommendation: 'Keep tracking for better insights' },
+                    correlations: calculateEnvironmentalCorrelations(data) || {}
+                };
+                
+                return analytics;
+            } catch (error) {
+                console.error('Analytics calculation error:', error);
+                return {
+                    trendAnalysis: { slope: 0, direction: 'stable', confidence: 0 },
+                    spatialClusters: [],
+                    temporalPatterns: { hourlyAvg: [], dailyAvg: [], peakHour: 12, peakDay: 0 },
+                    wellnessScore: 50,
+                    predictions: { nextMood: 3, confidence: 0, recommendation: 'Keep tracking for better insights' },
+                    correlations: {}
+                };
+            }
         }
         
         function calculateTrend(data) {
@@ -695,13 +707,28 @@
         }
         
         function calculateTemporalPatterns(data) {
-            const hourlyMoods = Array(24).fill().map(() => []);
-            const dailyMoods = Array(7).fill().map(() => []);
+            const hourlyMoods = Array(24).fill(null).map(() => []);
+            const dailyMoods = Array(7).fill(null).map(() => []);
             
             data.forEach(d => {
-                const date = new Date(d.timestamp);
-                hourlyMoods[date.getHours()].push(d.mood);
-                dailyMoods[date.getDay()].push(d.mood);
+                if (!d.timestamp || !d.mood) return;
+                
+                let date;
+                if (d.timestamp.toDate) {
+                    date = d.timestamp.toDate(); // Firestore timestamp
+                } else {
+                    date = new Date(d.timestamp); // Regular timestamp
+                }
+                
+                const hour = date.getHours();
+                const day = date.getDay();
+                
+                if (hour >= 0 && hour < 24 && hourlyMoods[hour]) {
+                    hourlyMoods[hour].push(d.mood);
+                }
+                if (day >= 0 && day < 7 && dailyMoods[day]) {
+                    dailyMoods[day].push(d.mood);
+                }
             });
             
             const hourlyAvg = hourlyMoods.map(moods => 
