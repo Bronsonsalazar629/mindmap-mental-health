@@ -238,6 +238,25 @@
             <i data-lucide="camera"></i> 
             <span>AR Wellness</span>
         </button>
+        
+        <!-- Live Camera Preview in Sidebar -->
+        <div id="sidebar-camera" class="sidebar-camera" style="display: none;">
+            <div class="camera-header">
+                <span>📷 Live AR Scanner</span>
+                <button id="close-sidebar-camera" class="camera-close">×</button>
+            </div>
+            <div class="camera-preview-container">
+                <video id="sidebar-camera-video" autoplay muted playsinline></video>
+                <canvas id="sidebar-camera-overlay"></canvas>
+                <div class="camera-status">
+                    <div id="sidebar-wellness-score">0</div>
+                    <div class="status-label">Wellness</div>
+                </div>
+            </div>
+            <div id="sidebar-detected-items" class="detected-items">
+                <div class="items-scroll">Scanning...</div>
+            </div>
+        </div>
     </div>
 
     <div id="app">
@@ -1290,35 +1309,28 @@
         };
         
         async function openARWellness() {
-            const modal = document.getElementById('ar-wellness-modal');
-            const loading = document.getElementById('ar-loading');
-            const closeBtn = document.getElementById('close-ar-modal');
+            const sidebarCamera = document.getElementById('sidebar-camera');
+            const closeBtn = document.getElementById('close-sidebar-camera');
             
-            modal.style.display = 'flex';
-            loading.style.display = 'flex';
+            // Show sidebar camera
+            sidebarCamera.style.display = 'block';
             
-            // Close modal handler
+            // Close handler
             closeBtn.onclick = closeARWellness;
-            modal.onclick = (e) => {
-                if (e.target === modal) closeARWellness();
-            };
             
             try {
                 console.log('🎥 Starting AR Wellness Scanner...');
                 
-                // Initialize camera
-                await initializeARCamera();
+                // Initialize sidebar camera
+                await initializeSidebarCamera();
                 
                 // Load AI model
                 await loadWellnessDetectionModel();
                 
                 // Start detection
-                await startWellnessDetection();
+                await startSidebarWellnessDetection();
                 
-                loading.style.display = 'none';
-                document.getElementById('ar-wellness-score').style.display = 'block';
-                
-                showNotification('AR Wellness Scanner active! Point camera at your environment', 'success');
+                showNotification('AR Wellness Scanner active in sidebar!', 'success');
                 
             } catch (error) {
                 console.error('❌ AR Wellness initialization failed:', error);
@@ -1591,6 +1603,149 @@
             return emojiMap[objectName] || '📦';
         }
         
+        // New sidebar camera functions
+        async function initializeSidebarCamera() {
+            arCamera = document.getElementById('sidebar-camera-video');
+            arCanvas = document.getElementById('sidebar-camera-overlay');
+            arContext = arCanvas.getContext('2d');
+            
+            const constraints = {
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'environment' // Use back camera if available
+                }
+            };
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                arCamera.srcObject = stream;
+                
+                // Wait for camera to be ready
+                await new Promise((resolve) => {
+                    arCamera.onloadedmetadata = () => {
+                        console.log('📷 Sidebar camera initialized:', arCamera.videoWidth, 'x', arCamera.videoHeight);
+                        
+                        // Set canvas to match video dimensions
+                        arCanvas.width = arCamera.videoWidth || 640;
+                        arCanvas.height = arCamera.videoHeight || 480;
+                        
+                        resolve();
+                    };
+                });
+                
+                // Start video playback
+                await arCamera.play();
+                console.log('✅ Sidebar camera feed active');
+                
+            } catch (error) {
+                console.error('❌ Sidebar camera access failed:', error);
+                throw error;
+            }
+        }
+        
+        async function startSidebarWellnessDetection() {
+            arDetectionActive = true;
+            detectSidebarWellnessElements();
+        }
+        
+        async function detectSidebarWellnessElements() {
+            if (!arDetectionActive || !arModel || !arCamera) return;
+            
+            try {
+                // Detect objects in current frame
+                const predictions = await arModel.detect(arCamera);
+                
+                // Clear previous overlays
+                arContext.clearRect(0, 0, arCanvas.width, arCanvas.height);
+                
+                let totalWellnessScore = 0;
+                let detectedElements = [];
+                
+                // Process each detected object
+                predictions.forEach(prediction => {
+                    const score = wellnessScores[prediction.class] || wellnessScores['default'];
+                    totalWellnessScore += score;
+                    detectedElements.push({
+                        object: prediction.class,
+                        confidence: prediction.score,
+                        score: score,
+                        bbox: prediction.bbox
+                    });
+                    
+                    // Draw bounding box and wellness score
+                    drawSidebarWellnessOverlay(prediction, score);
+                });
+                
+                // Update sidebar display
+                updateSidebarWellnessDisplay(totalWellnessScore, detectedElements);
+                
+                // Continue detection loop
+                requestAnimationFrame(detectSidebarWellnessElements);
+                
+            } catch (error) {
+                console.error('Sidebar detection error:', error);
+                setTimeout(detectSidebarWellnessElements, 100);
+            }
+        }
+        
+        function drawSidebarWellnessOverlay(prediction, score) {
+            const [x, y, width, height] = prediction.bbox;
+            
+            // Scale coordinates to canvas size
+            const scaleX = arCanvas.width / arCamera.videoWidth;
+            const scaleY = arCanvas.height / arCamera.videoHeight;
+            
+            const scaledX = x * scaleX;
+            const scaledY = y * scaleY;
+            const scaledWidth = width * scaleX;
+            const scaledHeight = height * scaleY;
+            
+            // Color based on wellness score
+            let color = '#6b7280';
+            if (score > 8) color = '#10b981'; // bright green
+            else if (score > 3) color = '#f59e0b'; // amber
+            else if (score < 0) color = '#ef4444'; // red
+            
+            // Draw compact bounding box
+            arContext.strokeStyle = color;
+            arContext.lineWidth = 2;
+            arContext.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+            
+            // Draw small score indicator
+            arContext.fillStyle = color;
+            arContext.fillRect(scaledX, scaledY - 15, 30, 15);
+            arContext.fillStyle = 'white';
+            arContext.font = '10px Inter, sans-serif';
+            arContext.fillText(score > 0 ? `+${score}` : `${score}`, scaledX + 3, scaledY - 3);
+        }
+        
+        function updateSidebarWellnessDisplay(totalScore, elements) {
+            const scoreElement = document.getElementById('sidebar-wellness-score');
+            const itemsElement = document.querySelector('.items-scroll');
+            
+            // Update score
+            scoreElement.textContent = Math.max(0, totalScore);
+            scoreElement.style.color = totalScore > 20 ? '#10b981' : totalScore > 10 ? '#f59e0b' : totalScore > 0 ? '#6b7280' : '#ef4444';
+            
+            // Update detected items
+            if (elements.length > 0) {
+                const itemsList = elements
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 3) // Show top 3
+                    .map(e => {
+                        const emoji = getElementEmoji(e.object);
+                        const scoreText = e.score > 0 ? `+${e.score}` : `${e.score}`;
+                        return `${emoji} ${e.object} (${scoreText})`;
+                    })
+                    .join('<br>');
+                
+                itemsElement.innerHTML = itemsList;
+            } else {
+                itemsElement.innerHTML = 'Scanning environment...';
+            }
+        }
+
         function closeARWellness() {
             arDetectionActive = false;
             
@@ -1601,8 +1756,8 @@
                 arCamera.srcObject = null;
             }
             
-            // Hide modal
-            document.getElementById('ar-wellness-modal').style.display = 'none';
+            // Hide sidebar camera
+            document.getElementById('sidebar-camera').style.display = 'none';
             
             console.log('📱 AR Wellness Scanner closed');
         }
@@ -2161,6 +2316,106 @@
             line-height: 1.4;
         }
 
+        /* Sidebar Camera Styles */
+        .sidebar-camera {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .camera-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .camera-preview-container {
+            position: relative;
+            aspect-ratio: 4/3;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #sidebar-camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #sidebar-camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .camera-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        #sidebar-wellness-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .detected-items {
+            padding: 0.75rem;
+            background: var(--bg-color);
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .items-scroll {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
         @media (max-width: 768px) {
             .ar-modal-content {
                 width: 95%;
@@ -2174,6 +2429,14 @@
             
             .ar-status {
                 flex: none;
+            }
+
+            .sidebar-camera {
+                margin-top: 0.5rem;
+            }
+
+            .camera-preview-container {
+                aspect-ratio: 16/12;
             }
         }
 
