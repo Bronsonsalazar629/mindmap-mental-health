@@ -411,19 +411,39 @@
     </div> 
     <!-- Google Maps API - Now loaded securely from config -->
     <script>
-        // Load Google Maps API with secure config
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.googleMaps.apiKey}&libraries=places,visualization,marker&callback=initMap&loading=async`;
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
+        // Wait for config to load, then initialize everything
+        function initializeApp() {
+            if (!window.CONFIG) {
+                console.error('Config not loaded! Make sure config.js exists and is working.');
+                return;
+            }
+            
+            // Load Google Maps API with secure config
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.googleMaps.apiKey}&libraries=places,visualization,marker&callback=initMap&loading=async`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+            
+            // Initialize Firebase with secure config
+            firebase.initializeApp(window.CONFIG.firebase);
+            
+            // Initialize Firebase services
+            window.db = firebase.firestore();
+            window.auth = firebase.auth();
+            db = window.db;
+            auth = window.auth;
+            
+            // Start authentication after Firebase is ready
+            initializeAuth();
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initializeApp);
     </script>
     <script>
-        // SECURITY NOTE: Firebase config is designed to be public
-        // Configuration now loaded from config.js (secure)
-        firebase.initializeApp(window.CONFIG.firebase);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        // Initialize Firebase variables after config loads
+        let db, auth;
         
         // Set up anonymous authentication
         let isAuthInitialized = false;
