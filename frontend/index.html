@@ -1,0 +1,3900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MindMap">
+    <title>MindMap: Mental Health Geography</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load configuration inline for demo -->
+    <script>
+        // Inline config for demo - REPLACE WITH YOUR KEYS
+        window.CONFIG = {
+            googleMaps: {
+                apiKey: 'AIzaSyDll2jvuvURfgbfs9JV4Iiuoh1IYBKsztU'
+            },
+            firebase: {
+                apiKey: 'AIzaSyC-2qIR03QzfDZ5AHCa8q7Y503y2tnKe7g',
+                authDomain: 'mindmap-mental-health-1d8f7.firebaseapp.com',
+                projectId: 'mindmap-mental-health-1d8f7',
+                storageBucket: 'mindmap-mental-health-1d8f7.firebasestorage.app',
+                messagingSenderId: '793337509337',
+                appId: '1:793337509337:web:46ffb3bb243cb1f9f615c8'
+            }
+        };
+        console.log('✅ Config loaded inline');
+    </script>
+    <!-- TensorFlow.js for AI-powered object detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>
+    <style>
+        /* Logo styles for main page */
+        .main-logo {
+            position: absolute;
+            top: 20px;
+            left: 280px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            animation: logoFadeIn 1s ease-out 0.5s forwards;
+        }
+
+        .main-logo img {
+            height: 36px;
+            width: auto;
+        }
+
+        .main-logo .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes logoFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mood button descriptions */
+        .mood-btn-container {
+            position: relative;
+            flex: 1;
+        }
+
+        .mood-btn {
+            width: 100%;
+            padding: 0.75rem 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.5rem;
+        }
+
+        .mood-description {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+        }
+
+        .mood-btn-container:hover .mood-description {
+            opacity: 1;
+        }
+
+        .mood-btn:hover {
+            background-color: var(--bg-color);
+            border-color: var(--primary-blue);
+            transform: scale(1.05);
+        }
+
+        .mood-btn.selected {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            transform: scale(1.05);
+        }
+
+        /* Enhanced loading states */
+        .sidebar-btn.loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .sidebar-btn.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Error state for buttons */
+        .sidebar-btn.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--primary-red);
+        }
+
+        /* Timeout indicator */
+        .timeout-warning {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: #f59e0b;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .timeout-warning.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .main-logo {
+                left: 10px;
+                right: 10px;
+                justify-content: center;
+                padding: 0.5rem 1rem;
+            }
+
+            .main-logo img {
+                height: 28px;
+            }
+
+            .main-logo .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .mood-description {
+                position: static;
+                transform: none;
+                margin-top: 0.5rem;
+                opacity: 1;
+                background: var(--bg-color);
+                color: var(--text-secondary);
+                font-size: 0.7rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- This container is for toast notifications -->
+    <div id="notification-container"></div>
+
+    <!-- Main Logo -->
+    <div class="main-logo" id="logo-container">
+        <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" id="main-logo-svg">
+            <circle cx="50" cy="30" r="15" stroke="#3b82f6" stroke-width="3" fill="none"/>
+            <circle cx="43" cy="27" r="2" fill="#3b82f6"/>
+            <circle cx="57" cy="27" r="2" fill="#3b82f6"/>
+            <path d="M45 33H55" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+            <path d="M50 45L40 70H60L50 45Z" fill="#8b5cf6"/>
+            <circle cx="50" cy="70" r="4" fill="#ffffff" stroke="#8b5cf6" stroke-width="2"/>
+        </svg>
+        <span class="logo-text">MindMap</span>
+    </div>
+
+    <div class="sidebar">
+        <button id="find-resources" class="sidebar-btn">
+            <i data-lucide="search"></i> 
+            <span>Find Resources</span>
+        </button>
+        <button id="track-mood" class="sidebar-btn">
+            <i data-lucide="smile"></i> 
+            <span>Track Mood</span>
+        </button>
+        <button id="wellness-walk" class="sidebar-btn">
+            <i data-lucide="map"></i> 
+            <span>Wellness Walk</span>
+        </button>
+        <button id="emergency" class="sidebar-btn emergency-btn">
+            <i data-lucide="alert-triangle"></i> 
+            <span>Emergency Help</span>
+        </button>
+        <button id="why-mindmap" class="sidebar-btn" onclick="window.open('why-mindmap.html', '_blank')">
+            <i data-lucide="help-circle"></i> 
+            <span>Why MindMap?</span>
+        </button>
+        <button id="toggle-heatmap" class="sidebar-btn">
+            <i data-lucide="thermometer"></i> 
+            <span>Mood Heatmap</span>
+        </button>
+        <button id="toggle-community-heatmap" class="sidebar-btn">
+            <i data-lucide="users"></i> 
+            <span>Community Mood</span>
+        </button>
+        <button id="ar-wellness" class="sidebar-btn">
+            <i data-lucide="camera"></i> 
+            <span>AR Wellness</span>
+        </button>
+        
+        <!-- Wellness Points Display -->
+        <div id="wellness-points-display" class="points-display">
+            <div class="points-header">
+                <span>🌟 Wellness Points</span>
+                <button id="points-shop" class="points-shop-btn">🛍️</button>
+            </div>
+            <div class="points-value">
+                <span id="user-points">0</span>
+            </div>
+            <div class="points-streak">
+                Daily streak: <span id="daily-streak">0</span> days
+            </div>
+        </div>
+        
+        <!-- Live Camera Preview in Sidebar -->
+        <div id="sidebar-camera" class="sidebar-camera" style="display: none;">
+            <div class="camera-header">
+                <span>📷 Live AR Scanner</span>
+                <button id="close-sidebar-camera" class="camera-close">×</button>
+            </div>
+            <div class="camera-preview-container">
+                <video id="sidebar-camera-video" autoplay muted playsinline></video>
+                <canvas id="sidebar-camera-overlay"></canvas>
+                <div class="camera-status">
+                    <div id="sidebar-wellness-score">0</div>
+                    <div class="status-label">Wellness</div>
+                </div>
+            </div>
+            <div id="sidebar-detected-items" class="detected-items">
+                <div class="items-scroll">Scanning...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app">
+        <div id="map"></div>
+        
+        <!-- AR Wellness Modal -->
+        <div id="ar-wellness-modal" class="modal-backdrop" style="display: none;">
+            <div class="ar-modal-content">
+                <div class="ar-header">
+                    <h3>🌟 AR Wellness Scanner</h3>
+                    <button id="close-ar-modal" class="close-btn">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="ar-content">
+                    <div id="ar-camera-container">
+                        <video id="ar-camera" autoplay muted playsinline></video>
+                        <canvas id="ar-overlay"></canvas>
+                    </div>
+                    <div class="ar-status">
+                        <div id="ar-loading" class="ar-loading">
+                            <i data-lucide="loader-2"></i>
+                            <span>Loading AI wellness detection...</span>
+                        </div>
+                        <div id="ar-wellness-score" class="wellness-score" style="display: none;">
+                            <div class="score-display">
+                                <span class="score-label">Wellness Score</span>
+                                <span class="score-value" id="wellness-score-value">0</span>
+                            </div>
+                            <div id="detected-elements" class="detected-elements">
+                                <div class="elements-label">Detected:</div>
+                                <div id="elements-list" class="elements-list">Scanning...</div>
+                            </div>
+                            <div class="wellness-tips" id="wellness-tips"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Points Shop Modal -->
+        <div id="points-shop-modal" class="modal-backdrop" style="display: none;">
+            <div class="shop-modal-content">
+                <div class="shop-header">
+                    <h3>🛍️ Wellness Points Shop</h3>
+                    <div class="user-points-display">
+                        <span id="shop-user-points">0</span> points
+                    </div>
+                    <button class="close-btn" id="close-shop">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="shop-content">
+                    <div class="shop-category">
+                        <h4>🎯 Challenges & Rewards</h4>
+                        <div class="shop-items">
+                            <div class="shop-item" data-cost="50" data-item="mood-boost">
+                                <div class="item-icon">😊</div>
+                                <div class="item-info">
+                                    <div class="item-name">Mood Boost Challenge</div>
+                                    <div class="item-desc">Get personalized mood-boosting activities</div>
+                                    <div class="item-cost">50 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                            <div class="shop-item" data-cost="100" data-item="ar-streak">
+                                <div class="item-icon">🔥</div>
+                                <div class="item-info">
+                                    <div class="item-name">AR Streak Multiplier</div>
+                                    <div class="item-desc">Double points for 7 days</div>
+                                    <div class="item-cost">100 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                            <div class="shop-item" data-cost="200" data-item="wellness-guide">
+                                <div class="item-icon">📖</div>
+                                <div class="item-info">
+                                    <div class="item-name">Personalized Wellness Guide</div>
+                                    <div class="item-desc">Custom wellness plan based on your AR data</div>
+                                    <div class="item-cost">200 points</div>
+                                </div>
+                                <button class="buy-btn">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shop-category">
+                        <h4>🏆 Achievements</h4>
+                        <div class="achievements-grid">
+                            <div class="achievement" data-req="100" id="nature-explorer">
+                                <div class="achievement-icon">🌳</div>
+                                <div class="achievement-name">Nature Explorer</div>
+                                <div class="achievement-desc">Scan 50 nature elements</div>
+                                <div class="achievement-progress">0/50</div>
+                            </div>
+                            <div class="achievement" data-req="200" id="wellness-master">
+                                <div class="achievement-icon">🧘</div>
+                                <div class="achievement-name">Wellness Master</div>
+                                <div class="achievement-desc">Reach 1000 total wellness points</div>
+                                <div class="achievement-progress">0/1000</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Panel -->
+        <div id="analytics-panel" class="panel hidden">
+            <div class="panel-content">
+                <button class="close-panel-btn" id="close-analytics-panel">
+                    <i data-lucide="x"></i>
+                </button>
+                <h3>Your Wellness Insights</h3>
+                <div class="chart-container">
+                    <canvas id="mood-chart"></canvas>
+                </div>
+                <div id="insights-text">Loading insights...</div>
+                
+                <!-- Sleek Exit Button -->
+                <div class="analytics-exit-container">
+                    <button id="analytics-exit-btn" class="analytics-exit-btn">
+                        <i data-lucide="arrow-left"></i>
+                        <span>Back to Map</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Insights Button -->
+        <button id="view-insights" title="View your wellness insights">
+            📊
+        </button>
+    </div>
+
+    <!-- Timeout Warning -->
+    <div id="timeout-warning" class="timeout-warning">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="clock"></i>
+            <span>Search taking longer than expected. Please wait...</span>
+        </div>
+    </div> 
+    <!-- Google Maps API - Direct load for demo -->
+    <script>
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDll2jvuvURfgbfs9JV4Iiuoh1IYBKsztU&libraries=places,visualization,marker&callback=initMap&loading=async`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+    </script>
+    <script>
+        // Direct Firebase initialization for demo
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-2qIR03QzfDZ5AHCa8q7Y503y2tnKe7g",
+            authDomain: "mindmap-mental-health-1d8f7.firebaseapp.com",
+            projectId: "mindmap-mental-health-1d8f7",
+            storageBucket: "mindmap-mental-health-1d8f7.firebasestorage.app",
+            messagingSenderId: "793337509337",
+            appId: "1:793337509337:web:46ffb3bb243cb1f9f615c8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        
+        // Initialize Firestore with error handling
+        let db, auth;
+        try {
+            db = firebase.firestore();
+            auth = firebase.auth();
+            
+            // Set offline persistence and handle connection issues
+            db.enablePersistence({ synchronizeTabs: true })
+                .catch((err) => {
+                    if (err.code == 'failed-precondition') {
+                        console.warn('Firestore persistence failed - multiple tabs open');
+                    } else if (err.code == 'unimplemented') {
+                        console.warn('Firestore persistence not supported');
+                    }
+                });
+        } catch (error) {
+            console.error('Firestore initialization error:', error);
+            // Create mock objects to prevent crashes
+            db = { collection: () => ({ add: () => Promise.resolve(), get: () => Promise.resolve({ forEach: () => {} }) }) };
+            auth = { onAuthStateChanged: () => {}, signInAnonymously: () => Promise.resolve() };
+        }
+        
+        // Set up anonymous authentication
+        let isAuthInitialized = false;
+        
+        // Sign in anonymously when the app loads
+        async function initializeAuth() {
+            try {
+                console.log('🔐 Initializing Firebase Auth...');
+                await auth.signInAnonymously();
+                console.log('✅ Anonymous authentication successful');
+                isAuthInitialized = true;
+            } catch (error) {
+                console.error('❌ Authentication failed:', error);
+                showNotification('Authentication failed. Some features may not work.', 'error');
+            }
+        }
+        
+        // Wait for auth state changes
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('✅ User authenticated:', user.uid);
+                isAuthInitialized = true;
+            } else {
+                console.log('⚠️ User not authenticated');
+                isAuthInitialized = false;
+            }
+        });
+
+        // Global State
+        let map;
+        let userLocation;
+        let placesService;
+        let moodChart = null;
+        let moodHeatmap = null;
+        let allMarkers = [];
+        let moodData = [];
+
+        // Initialize the map
+        async function initMap() {
+            // Initialize authentication first
+            await initializeAuth();
+            
+            const defaultLocation = { lat: 40.7128, lng: -74.0060 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: defaultLocation,
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"weight": "2.00"}]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#9c9c9c"}]
+                    },
+                    {
+                        "featureType": "landscape",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#ffffff"}]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#dbeafe"}]
+                    }
+                ]
+            });
+
+            placesService = new google.maps.places.PlacesService(map);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userLocation);
+                    
+                    new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: 'Your Location',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: '#3b82f6',
+                            fillOpacity: 1,
+                            strokeWeight: 3,
+                            strokeColor: '#ffffff'
+                        }
+                    });
+                    
+                    loadPreviousMoods();
+                }, (error) => {
+                    console.warn('Geolocation error:', error);
+                    showNotification('Please enable location access to use all features.', 'error');
+                    loadPreviousMoods();
+                });
+            } else {
+                showNotification('Geolocation is not supported by your browser.', 'error');
+                loadPreviousMoods();
+            }
+            
+            setupEventListeners();
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            
+            const iconMap = { info: 'info', success: 'check-circle', error: 'alert-circle' };
+            toast.innerHTML = `<i data-lucide="${iconMap[type]}"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons({ nodes: [toast.querySelector('i')] });
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.5s forwards';
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 4000);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('find-resources').addEventListener('click', findMentalHealthResources);
+            document.getElementById('track-mood').addEventListener('click', openMoodTracker);
+            document.getElementById('wellness-walk').addEventListener('click', findWellnessWalk);
+            document.getElementById('emergency').addEventListener('click', showEmergencyResources);
+            document.getElementById('toggle-heatmap').addEventListener('click', toggleMoodHeatmap);
+            document.getElementById('toggle-community-heatmap').addEventListener('click', toggleCommunityMoodHeatmap);
+            document.getElementById('ar-wellness').addEventListener('click', openARWellness);
+            document.getElementById('points-shop').addEventListener('click', openPointsShop);
+            document.getElementById('view-insights').addEventListener('click', showAnalytics);
+            document.getElementById('close-analytics-panel').addEventListener('click', closeAnalytics);
+            document.getElementById('analytics-exit-btn').addEventListener('click', closeAnalytics);
+            
+            lucide.createIcons();
+        }
+
+        // 🎓 ADVANCED ANALYTICS
+        
+        // Haversine formula for calculating distance between coordinates
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // Distance in km
+        }
+        
+        function calculateAdvancedAnalytics(data) {
+            try {
+                const analytics = {
+                    trendAnalysis: calculateTrend(data) || { slope: 0, direction: 'stable', confidence: 0 },
+                    spatialClusters: calculateSpatialClusters(data) || [],
+                    temporalPatterns: calculateTemporalPatterns(data) || { hourlyAvg: [], dailyAvg: [], peakHour: 12, peakDay: 0 },
+                    wellnessScore: calculateWellnessScore(data) || 50,
+                    predictions: predictMoodTrends(data) || { nextMood: 3, confidence: 0, recommendation: 'Keep tracking for better insights' },
+                    correlations: calculateEnvironmentalCorrelations(data) || {}
+                };
+                
+                return analytics;
+            } catch (error) {
+                console.error('Analytics calculation error:', error);
+                return {
+                    trendAnalysis: { slope: 0, direction: 'stable', confidence: 0 },
+                    spatialClusters: [],
+                    temporalPatterns: { hourlyAvg: [], dailyAvg: [], peakHour: 12, peakDay: 0 },
+                    wellnessScore: 50,
+                    predictions: { nextMood: 3, confidence: 0, recommendation: 'Keep tracking for better insights' },
+                    correlations: {}
+                };
+            }
+        }
+        
+        function calculateTrend(data) {
+            if (data.length < 2) return { slope: 0, direction: 'stable', confidence: 0 };
+            
+            const n = data.length;
+            const xMean = (n - 1) / 2;
+            const yMean = data.reduce((sum, d) => sum + d.mood, 0) / n;
+            
+            let numerator = 0;
+            let denominator = 0;
+            
+            data.forEach((d, i) => {
+                const xDiff = i - xMean;
+                const yDiff = d.mood - yMean;
+                numerator += xDiff * yDiff;
+                denominator += xDiff * xDiff;
+            });
+            
+            const slope = denominator !== 0 ? numerator / denominator : 0;
+            const direction = slope > 0.1 ? 'improving' : slope < -0.1 ? 'declining' : 'stable';
+            const confidence = Math.min(Math.abs(slope) * 100, 95);
+            
+            return { slope, direction, confidence };
+        }
+        
+        function calculateSpatialClusters(data) {
+            // Haversine formula for calculating distance between coordinates (inline)
+            function getDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radius of the Earth in kilometers
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = 
+                    Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c; // Distance in km
+            }
+            
+            const clusters = [];
+            const processed = new Set();
+            
+            data.forEach((point, i) => {
+                if (processed.has(i)) return;
+                
+                const cluster = [point];
+                processed.add(i);
+                
+                data.forEach((other, j) => {
+                    if (i === j || processed.has(j)) return;
+                    
+                    const distance = getDistance(
+                        point.location.latitude, point.location.longitude,
+                        other.location.latitude, other.location.longitude
+                    );
+                    
+                    if (distance < 0.5) { // 500m radius
+                        cluster.push(other);
+                        processed.add(j);
+                    }
+                });
+                
+                if (cluster.length > 1) {
+                    const avgMood = cluster.reduce((sum, p) => sum + p.mood, 0) / cluster.length;
+                    clusters.push({
+                        center: {
+                            lat: cluster.reduce((sum, p) => sum + p.location.latitude, 0) / cluster.length,
+                            lng: cluster.reduce((sum, p) => sum + p.location.longitude, 0) / cluster.length
+                        },
+                        avgMood,
+                        count: cluster.length,
+                        type: avgMood >= 4 ? 'wellness-hotspot' : avgMood <= 2 ? 'stress-zone' : 'neutral'
+                    });
+                }
+            });
+            
+            return clusters;
+        }
+        
+        function calculateTemporalPatterns(data) {
+            const hourlyMoods = Array(24).fill(null).map(() => []);
+            const dailyMoods = Array(7).fill(null).map(() => []);
+            
+            data.forEach(d => {
+                if (!d.timestamp || !d.mood) return;
+                
+                let date;
+                if (d.timestamp.toDate) {
+                    date = d.timestamp.toDate(); // Firestore timestamp
+                } else {
+                    date = new Date(d.timestamp); // Regular timestamp
+                }
+                
+                const hour = date.getHours();
+                const day = date.getDay();
+                
+                if (hour >= 0 && hour < 24 && hourlyMoods[hour]) {
+                    hourlyMoods[hour].push(d.mood);
+                }
+                if (day >= 0 && day < 7 && dailyMoods[day]) {
+                    dailyMoods[day].push(d.mood);
+                }
+            });
+            
+            const hourlyAvg = hourlyMoods.map(moods => 
+                moods.length > 0 ? moods.reduce((a, b) => a + b) / moods.length : 0
+            );
+            
+            const dailyAvg = dailyMoods.map(moods => 
+                moods.length > 0 ? moods.reduce((a, b) => a + b) / moods.length : 0
+            );
+            
+            const peakHour = hourlyAvg.indexOf(Math.max(...hourlyAvg));
+            const peakDay = dailyAvg.indexOf(Math.max(...dailyAvg));
+            
+            return { hourlyAvg, dailyAvg, peakHour, peakDay };
+        }
+        
+        function calculateWellnessScore(data) {
+            if (data.length === 0) return 0;
+            
+            const recentData = data.slice(-7); // Last 7 entries
+            const avgMood = recentData.reduce((sum, d) => sum + d.mood, 0) / recentData.length;
+            const consistency = 1 - (Math.sqrt(recentData.reduce((sum, d) => sum + Math.pow(d.mood - avgMood, 2), 0) / recentData.length) / 2);
+            const trend = calculateTrend(recentData);
+            const trendBonus = trend.direction === 'improving' ? 0.2 : trend.direction === 'declining' ? -0.2 : 0;
+            
+            return Math.min(Math.max((avgMood / 5 * 0.6 + consistency * 0.3 + trendBonus) * 100, 0), 100);
+        }
+        
+        function predictMoodTrends(data) {
+            if (data.length < 5) return { nextMood: 3, confidence: 0, recommendation: 'Need more data for predictions' };
+            
+            const recent = data.slice(-5);
+            const weights = [0.1, 0.15, 0.2, 0.25, 0.3]; // More weight to recent data
+            const weightedAvg = recent.reduce((sum, d, i) => sum + d.mood * weights[i], 0);
+            
+            const trend = calculateTrend(recent);
+            const prediction = Math.max(1, Math.min(5, weightedAvg + trend.slope * 2));
+            
+            let recommendation = '';
+            if (prediction < 2.5) {
+                recommendation = 'Consider visiting wellness locations or practicing mindfulness';
+            } else if (prediction > 4) {
+                recommendation = 'Great trend! Keep up your current wellness routine';
+            } else {
+                recommendation = 'Maintain balance with regular wellness activities';
+            }
+            
+            return { nextMood: prediction, confidence: trend.confidence, recommendation };
+        }
+        
+        function calculateEnvironmentalCorrelations(data) {
+            // Simplified environmental correlation analysis
+            const timeOfDayEffect = data.reduce((acc, d) => {
+                const hour = new Date(d.timestamp).getHours();
+                const timeOfDay = hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+                if (!acc[timeOfDay]) acc[timeOfDay] = [];
+                acc[timeOfDay].push(d.mood);
+                return acc;
+            }, {});
+            
+            const correlations = {};
+            Object.keys(timeOfDayEffect).forEach(time => {
+                const moods = timeOfDayEffect[time];
+                correlations[time] = moods.reduce((a, b) => a + b) / moods.length;
+            });
+            
+            return correlations;
+        }
+
+        // 🎬 DEMO DATA GENERATOR FOR SHOWCASE
+        function generateDemoData() {
+            if (confirm('Generate sample data for demonstration? This will add realistic mood entries to showcase the analytics.')) {
+                const demoEntries = [];
+                const now = new Date();
+                
+                // Generate 30 days of realistic demo data
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+                    const hour = 9 + Math.floor(Math.random() * 12); // 9 AM - 9 PM
+                    date.setHours(hour, Math.floor(Math.random() * 60));
+                    
+                    // Realistic mood patterns
+                    let baseMood = 3.2; // Slightly above neutral
+                    
+                    // Weekly patterns (weekends slightly better)
+                    if (date.getDay() === 0 || date.getDay() === 6) baseMood += 0.3;
+                    
+                    // Time of day patterns (mornings and evenings better)
+                    if (hour < 12 || hour > 18) baseMood += 0.2;
+                    
+                    // Add some randomness and trends
+                    const trendFactor = (29 - i) * 0.01; // Slight upward trend
+                    const randomFactor = (Math.random() - 0.5) * 1.2;
+                    
+                    const mood = Math.max(1, Math.min(5, Math.round((baseMood + trendFactor + randomFactor) * 10) / 10));
+                    
+                    // Generate realistic coordinates around a city center
+                    const baseLat = 40.7589 + (Math.random() - 0.5) * 0.1; // NYC area
+                    const baseLng = -73.9851 + (Math.random() - 0.5) * 0.1;
+                    
+                    demoEntries.push({
+                        mood: mood,
+                        description: ['Great day!', 'Feeling good', 'Pretty normal', 'Could be better', 'Rough day'][Math.floor(mood) - 1] || 'Okay',
+                        location: {
+                            latitude: baseLat,
+                            longitude: baseLng
+                        },
+                        timestamp: date,
+                        isDemo: true
+                    });
+                }
+                
+                // Add demo data to existing data
+                moodData = [...moodData, ...demoEntries];
+                
+                // Update displays
+                updatePointsDisplay();
+                showNotification('✨ Demo data generated! Check your analytics for advanced insights.', 'success');
+                
+                console.log('🎬 Generated', demoEntries.length, 'demo entries for showcase');
+                
+                // Update button state
+                updateDemoButtons();
+            }
+        }
+        
+        // Clear demo data function
+        function clearDemoData() {
+            if (confirm('Clear all demo data? This will remove all generated mood entries and reset your data.')) {
+                // Filter out demo entries
+                moodData = moodData.filter(entry => !entry.isDemo);
+                
+                // Reset points if needed
+                const remainingEntries = moodData.length;
+                if (remainingEntries === 0) {
+                    userPoints = 0;
+                    localStorage.setItem('wellnessPoints', '0');
+                }
+                
+                // Update displays
+                updatePointsDisplay();
+                showNotification('🗑️ Demo data cleared! Your real data is preserved.', 'success');
+                
+                console.log('🗑️ Demo data cleared, remaining entries:', remainingEntries);
+                
+                // Update button text
+                updateDemoButtons();
+            }
+        }
+        
+        // Update demo button based on data state
+        function updateDemoButtons() {
+            const existingButtons = document.querySelectorAll('.demo-btn');
+            existingButtons.forEach(btn => btn.remove());
+            
+            const hasDemoData = moodData.some(entry => entry.isDemo);
+            
+            if (hasDemoData) {
+                // Show Clear button
+                const clearBtn = document.createElement('button');
+                clearBtn.innerHTML = '🗑️ Clear Demo';
+                clearBtn.className = 'demo-btn';
+                clearBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                clearBtn.onclick = clearDemoData;
+                document.body.appendChild(clearBtn);
+                
+                // Show Generate More button
+                const moreBtn = document.createElement('button');
+                moreBtn.innerHTML = '➕ More Demo';
+                moreBtn.className = 'demo-btn';
+                moreBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 140px;
+                    background: #10b981;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                moreBtn.onclick = generateDemoData;
+                document.body.appendChild(moreBtn);
+            } else {
+                // Show Generate button
+                const demoBtn = document.createElement('button');
+                demoBtn.innerHTML = '🎬 Demo Data';
+                demoBtn.className = 'demo-btn';
+                demoBtn.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: #8b5cf6;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    z-index: 10000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                demoBtn.onclick = generateDemoData;
+                document.body.appendChild(demoBtn);
+            }
+        }
+        
+        // Initialize demo buttons for showcase
+        setTimeout(updateDemoButtons, 2000);
+
+        // Enhanced Mood Tracker with descriptions
+        let selectedMood = null;
+
+        function openMoodTracker() {
+            if (document.getElementById('mood-tracker-modal')) return;
+
+            const modalHTML = `
+                <div class="modal-backdrop visible" id="mood-tracker-modal">
+                    <div class="modal-content">
+                        <button class="modal-close-btn" id="close-mood-modal"><i data-lucide="x"></i></button>
+                        <h3>How are you feeling right now?</h3>
+                        <div id="mood-buttons">
+                            <div class="mood-btn-container">
+                                <button class="mood-btn" data-mood="1">😢</button>
+                                <div class="mood-description">Very Sad - Feeling overwhelmed, hopeless, or deeply distressed</div>
+                            </div>
+                            <div class="mood-btn-container">
+                                <button class="mood-btn" data-mood="2">😔</button>
+                                <div class="mood-description">Sad - Feeling down, disappointed, or melancholy</div>
+                            </div>
+                            <div class="mood-btn-container">
+                                <button class="mood-btn" data-mood="3">😐</button>
+                                <div class="mood-description">Neutral - Feeling balanced, neither particularly happy nor sad</div>
+                            </div>
+                            <div class="mood-btn-container">
+                                <button class="mood-btn" data-mood="4">🙂</button>
+                                <div class="mood-description">Good - Feeling content, positive, and generally well</div>
+                            </div>
+                            <div class="mood-btn-container">
+                                <button class="mood-btn" data-mood="5">😊</button>
+                                <div class="mood-description">Great - Feeling joyful, energetic, and very positive</div>
+                            </div>
+                        </div>
+                        <textarea id="mood-note" placeholder="Optional: What's on your mind? Any specific thoughts, events, or feelings you'd like to remember?"></textarea>
+                        <button id="save-mood" class="primary-btn">Save Mood Entry</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            lucide.createIcons({ nodes: [document.getElementById('close-mood-modal')] });
+
+            const modal = document.getElementById('mood-tracker-modal');
+            modal.querySelector('#close-mood-modal').addEventListener('click', closeMoodTracker);
+            modal.querySelector('#save-mood').addEventListener('click', saveMoodData);
+            modal.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => selectMood(e.currentTarget.dataset.mood, e.currentTarget));
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target.id === 'mood-tracker-modal') closeMoodTracker();
+            });
+        }
+
+        function closeMoodTracker() {
+            const modal = document.getElementById('mood-tracker-modal');
+            if (modal) {
+                modal.classList.remove('visible');
+                setTimeout(() => {
+                    modal.remove();
+                    selectedMood = null;
+                }, 300);
+            }
+        }
+
+        function selectMood(mood, element) {
+            selectedMood = mood;
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        async function saveMoodData() {
+            if (!selectedMood) {
+                return showNotification('Please select a mood before saving.', 'error');
+            }
+            if (!userLocation) {
+                return showNotification('Cannot save mood without your location.', 'error');
+            }
+            if (!isAuthInitialized) {
+                return showNotification('Please wait for authentication to complete.', 'error');
+            }
+
+            const moodEntry = {
+                mood: parseInt(selectedMood, 10),
+                note: document.getElementById('mood-note').value,
+                location: new firebase.firestore.GeoPoint(userLocation.lat, userLocation.lng),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const saveButton = document.getElementById('save-mood');
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+
+            try {
+                await db.collection('moods').add(moodEntry);
+                
+                // Also save anonymized data for community mood clustering
+                await saveAnonymizedMoodData(moodEntry);
+                
+                showNotification('Mood entry saved successfully!', 'success');
+                closeMoodTracker();
+                loadPreviousMoods();
+            } catch (error) {
+                console.error("Error saving mood data: ", error);
+                showNotification('Failed to save mood entry. Please try again.', 'error');
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save Mood Entry';
+            }
+        }
+
+        async function loadPreviousMoods() {
+            try {
+                const snapshot = await db.collection('moods').orderBy('timestamp', 'desc').limit(50).get();
+                moodData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateAnalytics();
+                updateMoodHeatmap();
+            } catch (error) {
+                console.error("Error loading mood data: ", error);
+                showNotification('Could not load previous mood data.', 'error');
+            }
+        }
+
+        // Enhanced Wellness Walk with better error handling and timeout
+        async function findWellnessWalk() {
+            if (!userLocation) {
+                showNotification('Please allow location access to find wellness walks', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('wellness-walk');
+            const timeoutWarning = document.getElementById('timeout-warning');
+            
+            // Reset button state
+            btn.classList.remove('error');
+            btn.classList.add('loading');
+            btn.innerHTML = '<i data-lucide="loader-2"></i> <span>Finding Walks...</span>';
+            lucide.createIcons({ nodes: [btn.querySelector('i')] });
+            
+            clearMarkers();
+            
+            // Show timeout warning after 8 seconds
+            const timeoutTimer = setTimeout(() => {
+                timeoutWarning.classList.add('visible');
+                lucide.createIcons({ nodes: [timeoutWarning.querySelector('i')] });
+            }, 8000);
+
+            try {
+                // Use optimized search based on connection quality
+                const results = await performOptimizedSearch(userLocation, 'wellness');
+                
+                // Clear timeout warning
+                clearTimeout(timeoutTimer);
+                timeoutWarning.classList.remove('visible');
+
+                if (results.length === 0) {
+                    showNotification('No wellness walks found nearby.', 'info');
+                } else {
+                    results.forEach(place => createWellnessMarker(place));
+                    showNotification(`Found ${results.length} wellness locations nearby.`, 'success');
+                }
+            } catch (error) {
+                console.error('Error finding wellness walks:', error);
+                showNotification('Error finding wellness walks. Please try again.', 'error');
+            } finally {
+                // Clear timeout warning and reset button state
+                clearTimeout(timeoutTimer);
+                timeoutWarning.classList.remove('visible');
+                btn.classList.remove('loading', 'error');
+                btn.innerHTML = '<i data-lucide="map-pin"></i> <span>Wellness Walk</span>';
+                lucide.createIcons({ nodes: [btn.querySelector('i')] });
+            }
+        }
+
+
+
+        function createWellnessMarker(place) {
+            const marker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: map,
+                title: place.name,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 6,
+                    fillColor: '#22c55e',
+                    fillOpacity: 0.8,
+                    strokeWeight: 2,
+                    strokeColor: '#ffffff'
+                }
+            });
+            
+            allMarkers.push(marker);
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="padding: 1rem; font-family: 'Inter', sans-serif; max-width: 300px;">
+                        <h3 style="margin: 0 0 0.75rem 0; color: #1f2937; font-size: 1.125rem;">${place.name}</h3>
+                        <p style="margin: 0 0 0.5rem 0; color: #6b7280; font-size: 0.875rem;"><strong>Type:</strong> Wellness Location</p>
+                        <p style="margin: 0 0 0.75rem 0; color: #6b7280; font-size: 0.875rem;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
+                        <button onclick="getDirections('${place.place_id}')" 
+                            style="background: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                            Start Walking
+                        </button>
+                    </div>
+                `
+            });
+            
+            marker.addListener('click', function() {
+                infoWindow.open(map, marker);
+            });
+        }
+
+        function getDirections(placeId) {
+            if (!placeId) return;
+            const url = `https://www.google.com/maps/dir/?api=1&destination_place_id=${placeId}&travelmode=driving`;
+            window.open(url, '_blank');
+        }
+
+        function clearMarkers() {
+            allMarkers.forEach(marker => marker.setMap(null));
+            allMarkers = [];
+        }
+
+        function showEmergencyResources() {
+            const modalHTML = `
+                <div class="modal-backdrop visible" id="emergency-modal">
+                    <div class="modal-content">
+                        <button class="modal-close-btn" id="close-emergency-modal"><i data-lucide="x"></i></button>
+                        <h3 style="color: #ef4444;">🚨 Emergency Mental Health Resources</h3>
+                        <div style="margin: 1.5rem 0;">
+                            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                <h4 style="color: #dc2626; margin-bottom: 0.5rem;">Crisis Hotlines</h4>
+                                <p><strong>National Suicide Prevention Lifeline:</strong> <a href="tel:988" style="color: #dc2626;">988</a></p>
+                                <p><strong>Crisis Text Line:</strong> Text HOME to <a href="sms:741741" style="color: #dc2626;">741741</a></p>
+                            </div>
+                            <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                <h4 style="color: #d97706; margin-bottom: 0.5rem;">24/7 Support</h4>
+                                <p><strong>SAMHSA National Helpline:</strong> <a href="tel:1-800-662-4357" style="color: #d97706;">1-800-662-HELP</a></p>
+                                <p><strong>NAMI HelpLine:</strong> <a href="tel:1-800-950-6264" style="color: #d97706;">1-800-950-NAMI</a></p>
+                            </div>
+                            <div style="background: #dbeafe; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem;">
+                                <h4 style="color: #2563eb; margin-bottom: 0.5rem;">Online Resources</h4>
+                                <p><a href="https://suicidepreventionlifeline.org" target="_blank" style="color: #2563eb;">Suicide Prevention Lifeline</a></p>
+                                <p><a href="https://www.nami.org" target="_blank" style="color: #2563eb;">National Alliance on Mental Illness</a></p>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6b7280; text-align: center;">
+                            If you're in immediate danger, please call 911 or go to your nearest emergency room.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            lucide.createIcons({ nodes: [document.getElementById('close-emergency-modal')] });
+            
+            const modal = document.getElementById('emergency-modal');
+            modal.querySelector('#close-emergency-modal').addEventListener('click', () => {
+                modal.classList.remove('visible');
+                setTimeout(() => modal.remove(), 300);
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target.id === 'emergency-modal') {
+                    modal.classList.remove('visible');
+                    setTimeout(() => modal.remove(), 300);
+                }
+            });
+        }
+
+        function showAnalytics() {
+            const panel = document.getElementById('analytics-panel');
+            panel.classList.remove('hidden');
+            updateAnalytics();
+        }
+
+        function closeAnalytics() {
+            const panel = document.getElementById('analytics-panel');
+            
+            // Add smooth closing animation
+            panel.style.transform = 'translateX(100%)';
+            
+            setTimeout(() => {
+                panel.classList.add('hidden');
+                panel.style.transform = ''; // Reset transform
+                
+                // Smooth zoom back to map
+                if (typeof map !== 'undefined' && map) {
+                    // Add a subtle map animation
+                    const mapElement = document.getElementById('map');
+                    if (mapElement) {
+                        mapElement.style.transition = 'transform 0.3s ease-out';
+                        mapElement.style.transform = 'scale(1.02)';
+                        
+                        setTimeout(() => {
+                            mapElement.style.transform = 'scale(1)';
+                            setTimeout(() => {
+                                mapElement.style.transition = '';
+                            }, 300);
+                        }, 100);
+                    }
+                    
+                    // Trigger map resize to ensure proper display
+                    setTimeout(() => {
+                        google.maps.event.trigger(map, 'resize');
+                        if (userLocation) {
+                            map.panTo(userLocation);
+                        }
+                    }, 150);
+                }
+                
+                // Show success message
+                showNotification('📊 Analytics closed - Welcome back to your map!', 'success');
+                
+            }, 300);
+        }
+
+        function updateAnalytics() {
+            if (moodData.length === 0) {
+                document.getElementById('insights-text').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                        <h4>No Data Yet</h4>
+                        <p>Start tracking your mood and using AR wellness to see advanced analytics!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Advanced analytics calculations
+            const analytics = calculateAdvancedAnalytics(moodData);
+            
+            const ctx = document.getElementById('mood-chart').getContext('2d');
+            if (moodChart) {
+                moodChart.destroy();
+            }
+            
+            const last7Days = moodData.slice(0, 7).reverse();
+            const labels = last7Days.map(entry => {
+                const date = entry.timestamp?.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp);
+                return date.toLocaleDateString();
+            });
+            const data = last7Days.map(entry => entry.mood);
+            
+            moodChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mood',
+                        data: data,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const avgMood = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(1);
+            const trend = data.length > 1 ? (data[data.length - 1] - data[0] > 0 ? 'improving' : 'declining') : 'stable';
+            
+            // 🎓 ADVANCED INSIGHTS DISPLAY
+            document.getElementById('insights-text').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    
+                    <!-- Wellness Score Card -->
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">${Math.round(analytics.wellnessScore)}%</div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">Overall Wellness Score</div>
+                        <div style="font-size: 0.75rem; margin-top: 0.5rem; opacity: 0.8;">
+                            ${analytics.trendAnalysis.direction === 'improving' ? '📈 Improving' : 
+                              analytics.trendAnalysis.direction === 'declining' ? '📉 Needs attention' : '📊 Stable'}
+                        </div>
+                    </div>
+                    
+                    <!-- Trend Analysis -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">📈 Trend Analysis</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Direction:</strong> ${analytics.trendAnalysis.direction}</div>
+                            <div><strong>Confidence:</strong> ${Math.round(analytics.trendAnalysis.confidence)}%</div>
+                            <div style="margin-top: 0.5rem; padding: 0.75rem; background: ${analytics.trendAnalysis.direction === 'improving' ? '#f0fdf4' : analytics.trendAnalysis.direction === 'declining' ? '#fef2f2' : '#f8fafc'}; border-radius: 6px; font-size: 0.8rem;">
+                                ${analytics.trendAnalysis.direction === 'improving' ? '✨ Your wellness is trending upward!' : 
+                                  analytics.trendAnalysis.direction === 'declining' ? '⚠️ Consider focusing on self-care activities' : 
+                                  '📊 Your mood remains consistent'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Predictions -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🔮 AI Predictions</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Predicted next mood:</strong> ${analytics.predictions.nextMood.toFixed(1)}/5</div>
+                            <div><strong>Confidence:</strong> ${Math.round(analytics.predictions.confidence)}%</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 6px; font-size: 0.8rem; border-left: 3px solid #3b82f6;">
+                                💡 ${analytics.predictions.recommendation}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Spatial Insights -->
+                    ${analytics.spatialClusters.length > 0 ? `
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🗺️ Spatial Patterns</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Wellness hotspots found:</strong> ${analytics.spatialClusters.filter(c => c.type === 'wellness-hotspot').length}</div>
+                            <div><strong>Areas to avoid:</strong> ${analytics.spatialClusters.filter(c => c.type === 'stress-zone').length}</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-radius: 6px; font-size: 0.8rem;">
+                                📍 Check your map for highlighted wellness zones!
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Temporal Patterns -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">⏰ Best Times</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            <div><strong>Peak mood hour:</strong> ${analytics.temporalPatterns.peakHour}:00</div>
+                            <div><strong>Best day:</strong> ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][analytics.temporalPatterns.peakDay]}</div>
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; font-size: 0.8rem;">
+                                ⏰ Schedule important activities during your peak times!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental Correlations -->
+                    <div style="background: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">🌍 Environmental Impact</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                            ${Object.entries(analytics.correlations).map(([time, mood]) => 
+                                `<div><strong>${time.charAt(0).toUpperCase() + time.slice(1)}:</strong> ${mood.toFixed(1)}/5</div>`
+                            ).join('')}
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 6px; font-size: 0.8rem;">
+                                🌟 Your mood varies throughout the day - use this insight for better planning!
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Summary Stats -->
+                <div style="background: var(--bg-color); padding: 1.5rem; border-radius: 12px; margin-top: 1rem;">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--text-primary);">📊 Data Summary</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #8b5cf6;">${moodData.length}</div>
+                            <div style="color: var(--text-secondary);">Total Entries</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">${avgMood}/5</div>
+                            <div style="color: var(--text-secondary);">Avg Mood</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">${Math.max(...moodData.map(d => d.mood))}/5</div>
+                            <div style="color: var(--text-secondary);">Peak Mood</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">${Math.min(...moodData.map(d => d.mood))}/5</div>
+                            <div style="color: var(--text-secondary);">Lowest Mood</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.875rem; opacity: 0.9;">🧠 Powered by Advanced Analytics</div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Spatial clustering, temporal analysis, and predictive modeling</div>
+                </div>
+                
+                <!-- Prominent Close Button -->
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button onclick="closeAnalytics()" style="
+                        background: #6b7280; 
+                        color: white; 
+                        border: none; 
+                        padding: 0.75rem 2rem; 
+                        border-radius: 8px; 
+                        cursor: pointer; 
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">
+                        ← Close Analytics
+                    </button>
+                </div>
+            `;
+        }
+
+        function updateMoodHeatmap() {
+            console.log('Mood heatmap updated with', moodData.length, 'data points');
+        }
+
+        function toggleMoodHeatmap() {
+            if (moodData.length === 0) {
+                showNotification('No mood data available for heatmap.', 'info');
+                return;
+            }
+            
+            if (moodHeatmap) {
+                moodHeatmap.setMap(moodHeatmap.getMap() ? null : map);
+                const btn = document.getElementById('toggle-heatmap');
+                btn.innerHTML = moodHeatmap.getMap() ? 
+                    '<i data-lucide="thermometer"></i> <span>Hide Heatmap</span>' : 
+                    '<i data-lucide="thermometer"></i> <span>Show Heatmap</span>';
+                lucide.createIcons({ nodes: [btn.querySelector('i')] });
+            } else {
+                createMoodHeatmap();
+            }
+        }
+
+        function createMoodHeatmap() {
+            const heatmapData = moodData.map(entry => {
+                if (entry.location && entry.location.latitude && entry.location.longitude) {
+                    return {
+                        location: new google.maps.LatLng(entry.location.latitude, entry.location.longitude),
+                        weight: entry.mood
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
+            
+            if (heatmapData.length === 0) {
+                showNotification('No location data available for heatmap.', 'info');
+                return;
+            }
+            
+            moodHeatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatmapData,
+                map: map
+            });
+            
+            const btn = document.getElementById('toggle-heatmap');
+            btn.innerHTML = '<i data-lucide="thermometer"></i> <span>Hide Heatmap</span>';
+            lucide.createIcons({ nodes: [btn.querySelector('i')] });
+            
+            showNotification('Mood heatmap displayed!', 'success');
+        }
+
+        async function findMentalHealthResources() {
+            if (!userLocation) {
+                showNotification('Please allow location access to find nearby resources', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('find-resources');
+            const timeoutWarning = document.getElementById('timeout-warning');
+            
+            // Reset button state
+            btn.classList.remove('error');
+            btn.classList.add('loading');
+            btn.innerHTML = '<i data-lucide="loader-2"></i> <span>Searching...</span>';
+            lucide.createIcons({ nodes: [btn.querySelector('i')] });
+
+            clearMarkers();
+
+            // Show timeout warning after 8 seconds
+            const timeoutTimer = setTimeout(() => {
+                timeoutWarning.classList.add('visible');
+                lucide.createIcons({ nodes: [timeoutWarning.querySelector('i')] });
+            }, 8000);
+
+            try {
+                // Use optimized search based on connection quality
+                const results = await performOptimizedSearch(userLocation, 'mentalHealth');
+                
+                // Clear timeout warning
+                clearTimeout(timeoutTimer);
+                timeoutWarning.classList.remove('visible');
+
+                if (results.length === 0) {
+                    showNotification('No mental health resources found nearby.', 'info');
+                } else {
+                    results.forEach(place => createResourceMarker(place));
+                    showNotification(`Found ${results.length} mental health resources nearby.`, 'success');
+                }
+            } catch (error) {
+                console.error('Error finding resources:', error);
+                showNotification('Error finding resources. Please try again.', 'error');
+            } finally {
+                // Clear timeout warning and reset button state
+                clearTimeout(timeoutTimer);
+                timeoutWarning.classList.remove('visible');
+                btn.classList.remove('loading', 'error');
+                btn.innerHTML = '<i data-lucide="search"></i> <span>Find Resources</span>';
+                lucide.createIcons({ nodes: [btn.querySelector('i')] });
+            }
+        }
+
+        function createResourceMarker(place) {
+            const marker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: map,
+                title: place.name,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 6,
+                    fillColor: '#ef4444',
+                    fillOpacity: 0.8,
+                    strokeWeight: 2,
+                    strokeColor: '#ffffff'
+                }
+            });
+            
+            allMarkers.push(marker);
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="padding: 1rem; font-family: 'Inter', sans-serif; max-width: 300px;">
+                        <h3 style="margin: 0 0 0.75rem 0; color: #1f2937; font-size: 1.125rem;">${place.name}</h3>
+                        <p style="margin: 0 0 0.5rem 0; color: #6b7280; font-size: 0.875rem;"><strong>Address:</strong> ${place.vicinity}</p>
+                        <p style="margin: 0 0 0.75rem 0; color: #6b7280; font-size: 0.875rem;"><strong>Rating:</strong> ${place.rating || 'N/A'} ⭐</p>
+                        ${place.opening_hours ? `<p style="margin: 0 0 1rem 0; color: #6b7280; font-size: 0.875rem;"><strong>Status:</strong> ${place.opening_hours.open_now ? '✅ Open Now' : '⏰ Closed'}</p>` : ''}
+                        <button onclick="getDirections('${place.place_id}')" 
+                            style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                            Get Directions
+                        </button>
+                    </div>
+                `
+            });
+            
+            marker.addListener('click', function() {
+                infoWindow.open(map, marker);
+            });
+        }
+
+        // Modern Places API search using the new google.maps.places.Place
+        async function modernPlacesAPISearch(location, searchType) {
+            console.log(`🆕 Using NEW Google Places API for ${searchType}`);
+            console.log(`📍 Location:`, location);
+            console.log(`🗺️ Google Maps Places available:`, !!google.maps.places);
+            console.log(`🔧 Place class available:`, !!google.maps.places.Place);
+            console.log(`🔧 searchByText available:`, !!google.maps.places.Place?.searchByText);
+            
+            if (!google.maps.places.Place) {
+                console.error('❌ New Places API not available');
+                return [];
+            }
+            
+            if (!google.maps.places.Place.searchByText) {
+                console.error('❌ searchByText method not available');
+                return [];
+            }
+            
+            const searchQueries = searchType === 'mentalHealth' ? 
+                ['mental health clinic', 'therapist', 'counseling center'] :
+                ['park', 'recreation area', 'walking trail'];
+            
+            console.log(`📝 Search queries for ${searchType}:`, searchQueries);
+            
+            const allResults = [];
+            
+            for (const query of searchQueries) {
+                try {
+                    console.log(`🔍 Searching for: "${query}"`);
+                    
+                    const request = {
+                        textQuery: query,
+                        fields: ['displayName', 'location', 'rating', 'formattedAddress', 'id'],
+                        locationBias: {
+                            center: location,
+                            radius: 5000
+                        },
+                        maxResultCount: 10
+                    };
+                    
+                    console.log(`📋 Request object:`, JSON.stringify(request, null, 2));
+                    
+                    console.log(`⏳ Making API call...`);
+                    const result = await google.maps.places.Place.searchByText(request);
+                    console.log(`📥 Raw API response:`, result);
+                    
+                    if (result && result.places && result.places.length > 0) {
+                        console.log(`✅ Found ${result.places.length} results for "${query}"`);
+                        console.log(`📍 First result sample:`, result.places[0]);
+                        
+                        // Convert new format to old format for compatibility
+                        const convertedResults = result.places.map(place => ({
+                            place_id: place.id,
+                            name: place.displayName?.text || place.displayName,
+                            vicinity: place.formattedAddress,
+                            rating: place.rating,
+                            geometry: {
+                                location: place.location
+                            }
+                        }));
+                        
+                        console.log(`🔄 Converted results sample:`, convertedResults[0]);
+                        allResults.push(...convertedResults);
+                    } else {
+                        console.log(`⚠️ No results for "${query}"`);
+                        console.log(`🔍 Result structure:`, result);
+                    }
+                } catch (error) {
+                    console.error(`❌ Error searching for "${query}":`, error);
+                    console.error(`📊 Error details:`, {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                }
+            }
+            
+            // Remove duplicates
+            const uniqueResults = allResults.filter((result, index, self) => 
+                index === self.findIndex(r => r.place_id === result.place_id)
+            );
+            
+            console.log(`🆕 Modern API search completed: ${uniqueResults.length} unique results`);
+            console.log(`📊 Final results:`, uniqueResults);
+            return uniqueResults;
+        }
+
+        // Optimized search function that prioritizes modern API
+        async function performOptimizedSearch(location, searchType) {
+            console.log(`🔍 Starting search for ${searchType}`);
+            
+            // First try: Modern Places API (most likely to work with new API keys)
+            try {
+                console.log('🆕 Trying modern Places API first');
+                const modernResults = await modernPlacesAPISearch(location, searchType);
+                
+                if (modernResults.length > 0) {
+                    console.log(`✅ Modern Places API success: ${modernResults.length} results`);
+                    return modernResults;
+                } else {
+                    console.log('⚠️ Modern Places API returned no results');
+                }
+            } catch (error) {
+                console.warn('🆕 Modern Places API failed:', error.message);
+            }
+            
+            // Fallback: Return empty results if modern API fails
+            console.log('❌ All search methods failed');
+            return [];
+        }
+
+        // 🌐 SOCIAL MOOD CLUSTERING - MIT-Level Innovation
+        
+        // 🎨 Custom Heatmap Overlay (replaces deprecated Google Heatmap)
+        function createCustomHeatmapOverlay(data, map) {
+            // Create overlay object
+            const overlay = new google.maps.OverlayView();
+            
+            overlay.data = data;
+            overlay.canvas = null;
+            overlay.ctx = null;
+            overlay.isVisible = true;
+            
+            overlay.onAdd = function() {
+                // Create canvas element
+                this.canvas = document.createElement('canvas');
+                this.canvas.style.position = 'absolute';
+                this.canvas.style.pointerEvents = 'none';
+                this.canvas.style.opacity = '0.6';
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Add to overlay layer
+                const panes = this.getPanes();
+                panes.overlayLayer.appendChild(this.canvas);
+            };
+
+            overlay.draw = function() {
+                const projection = this.getProjection();
+                const bounds = this.getMap().getBounds();
+                
+                if (!projection || !bounds) return;
+
+                // Calculate zoom-responsive radius first to determine canvas padding
+                const zoomLevel = this.getMap().getZoom();
+                const baseRadius = this.calculateZoomResponsiveRadius(zoomLevel);
+                
+                // Get map dimensions and add padding to prevent clipping
+                const mapDiv = this.getMap().getDiv();
+                const padding = baseRadius * 2; // Extra space around edges
+                const width = mapDiv.offsetWidth + (padding * 2);
+                const height = mapDiv.offsetHeight + (padding * 2);
+                
+                // Set canvas size with padding
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.canvas.style.width = width + 'px';
+                this.canvas.style.height = height + 'px';
+                
+                // Position canvas to account for padding (negative margins)
+                this.canvas.style.left = -padding + 'px';
+                this.canvas.style.top = -padding + 'px';
+
+                // Clear entire canvas
+                this.ctx.clearRect(0, 0, width, height);
+
+                if (!this.isVisible) return;
+
+                console.log(`🔍 Zoom: ${zoomLevel}, Radius: ${baseRadius}px, Canvas: ${width}x${height} with ${padding}px padding`);
+
+                // Draw heatmap points with padding offset
+                this.data.forEach(point => {
+                    const pixelPosition = projection.fromLatLngToDivPixel(point.location);
+                    if (pixelPosition) {
+                        // Adjust position for canvas padding
+                        const adjustedX = pixelPosition.x + padding;
+                        const adjustedY = pixelPosition.y + padding;
+                        this.drawHeatPoint(adjustedX, adjustedY, point.weight, baseRadius);
+                    }
+                });
+            };
+
+            // Calculate zoom-responsive radius to maintain consistent geographic coverage
+            overlay.calculateZoomResponsiveRadius = function(zoomLevel) {
+                // Base radius represents ~200 meters at zoom level 15
+                const baseZoom = 15;
+                const baseRadius = 50; // pixels
+                const metersRepresented = 200; // meters
+                
+                // Zoom scaling: each zoom level doubles/halves the scale
+                // Higher zoom = more detailed view = larger pixel radius needed for same geographic area
+                const zoomDifference = zoomLevel - baseZoom;
+                const scaleFactor = Math.pow(2, zoomDifference);
+                
+                const responsiveRadius = baseRadius * scaleFactor;
+                
+                // Clamp radius to reasonable bounds for performance and visual appeal
+                const minRadius = 15;  // Minimum 15px
+                const maxRadius = 200; // Maximum 200px
+                
+                return Math.max(minRadius, Math.min(maxRadius, responsiveRadius));
+            };
+
+            overlay.drawHeatPoint = function(x, y, intensity, radius = 50) {
+                const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+                
+                // Color based on mood intensity (1-5 scale)
+                const colors = {
+                    1: 'rgba(255, 0, 0, 0.8)',     // Red for very sad
+                    2: 'rgba(255, 69, 0, 0.8)',   // Orange-red for sad
+                    3: 'rgba(255, 255, 0, 0.8)',  // Yellow for neutral
+                    4: 'rgba(173, 255, 47, 0.8)', // Yellow-green for good
+                    5: 'rgba(0, 255, 0, 0.8)'     // Green for great
+                };
+                
+                const color = colors[Math.round(intensity)] || colors[3];
+                
+                // Adjust opacity based on radius for better visual balance
+                const baseOpacity = 0.8;
+                const opacityFactor = Math.max(0.3, Math.min(1.0, 50 / radius));
+                const adjustedColor = color.replace('0.8', (baseOpacity * opacityFactor).toFixed(2));
+                
+                gradient.addColorStop(0, adjustedColor);
+                gradient.addColorStop(0.6, adjustedColor.replace(/[\d.]+\)$/, '0.1)'));
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+            };
+
+            overlay.onRemove = function() {
+                // Clean up all listeners and timers
+                this.removeListeners();
+                
+                // Remove canvas
+                if (this.canvas && this.canvas.parentNode) {
+                    this.canvas.parentNode.removeChild(this.canvas);
+                }
+            };
+
+            overlay.hide = function() {
+                this.isVisible = false;
+                this.draw(); // Redraw without points
+            };
+
+            overlay.show = function() {
+                this.isVisible = true;
+                this.draw(); // Redraw with points
+            };
+            
+            // Set the map
+            overlay.setMap(map);
+            
+            // Debounced drawing to prevent choppy rendering during zoom
+            overlay.drawTimeout = null;
+            overlay.debouncedDraw = function() {
+                // Cancel previous draw if still pending
+                if (this.drawTimeout) {
+                    clearTimeout(this.drawTimeout);
+                }
+                
+                // Schedule new draw with slight delay for smooth zoom
+                this.drawTimeout = setTimeout(() => {
+                    if (this.getMap()) {
+                        // Use requestAnimationFrame for smooth rendering
+                        requestAnimationFrame(() => {
+                            this.draw();
+                        });
+                    }
+                }, 50); // Reduced delay for more responsive feel
+            };
+
+            // Add zoom change listener with debounced drawing
+            overlay.zoomListener = map.addListener('zoom_changed', function() {
+                overlay.debouncedDraw();
+            });
+            
+            // Also listen for map bounds changes (pan, resize)
+            overlay.boundsListener = map.addListener('bounds_changed', function() {
+                overlay.debouncedDraw();
+            });
+            
+            // Store reference to listeners for cleanup
+            overlay.removeListeners = function() {
+                // Clear any pending draws
+                if (this.drawTimeout) {
+                    clearTimeout(this.drawTimeout);
+                }
+                
+                // Remove event listeners
+                if (this.zoomListener) {
+                    google.maps.event.removeListener(this.zoomListener);
+                }
+                if (this.boundsListener) {
+                    google.maps.event.removeListener(this.boundsListener);
+                }
+            };
+            
+            return overlay;
+        }
+        
+        // 📱 AR WELLNESS OVERLAYS - MIT-Level Innovation
+        
+        let arModel = null;
+        let arCamera = null;
+        let arCanvas = null;
+        let arContext = null;
+        let arDetectionActive = false;
+        
+        // Wellness scoring system for detected objects
+        const wellnessScores = {
+            // Nature elements (highest scores)
+            'potted plant': 10, 'plant': 10, 'tree': 15, 'flower': 12,
+            'grass': 8, 'bush': 8,
+            
+            // Water features
+            'fountain': 12, 'pond': 10, 'lake': 15,
+            
+            // Animals (stress relief)
+            'bird': 8, 'cat': 10, 'dog': 12, 'butterfly': 8,
+            
+            // Art and culture
+            'sculpture': 8, 'statue': 6, 'painting': 7, 'mural': 9,
+            
+            // Architecture (moderate scores)
+            'building': 3, 'house': 4, 'church': 6, 'museum': 8,
+            
+            // Furniture (neutral to positive)
+            'bench': 5, 'chair': 3, 'table': 2,
+            
+            // Vehicles (neutral to negative)
+            'car': -2, 'truck': -3, 'bus': -1, 'motorcycle': -2,
+            
+            // Technology (slightly negative for wellness)
+            'tv': -3, 'computer': -4, 'phone': -3,
+            
+            // Food (context dependent, generally positive)
+            'apple': 5, 'banana': 4, 'orange': 4, 'food': 3,
+            
+            // Default for unrecognized objects
+            'default': 1
+        };
+        
+        async function openARWellness() {
+            const sidebarCamera = document.getElementById('sidebar-camera');
+            const closeBtn = document.getElementById('close-sidebar-camera');
+            
+            // Show sidebar camera
+            sidebarCamera.style.display = 'block';
+            
+            // Close handler
+            closeBtn.onclick = closeARWellness;
+            
+            try {
+                console.log('🎥 Starting AR Wellness Scanner...');
+                
+                // Initialize sidebar camera
+                await initializeSidebarCamera();
+                
+                // Load AI model
+                await loadWellnessDetectionModel();
+                
+                // Start detection
+                await startSidebarWellnessDetection();
+                
+                showNotification('AR Wellness Scanner active in sidebar!', 'success');
+                
+            } catch (error) {
+                console.error('❌ AR Wellness initialization failed:', error);
+                showNotification('Camera access required for AR Wellness Scanner', 'error');
+                closeARWellness();
+            }
+        }
+        
+        async function initializeARCamera() {
+            arCamera = document.getElementById('ar-camera');
+            arCanvas = document.getElementById('ar-overlay');
+            arContext = arCanvas.getContext('2d');
+            
+            const constraints = {
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'environment' // Use back camera if available
+                }
+            };
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                arCamera.srcObject = stream;
+                
+                // Wait for camera to be ready
+                await new Promise((resolve) => {
+                    arCamera.onloadedmetadata = () => {
+                        console.log('📷 Camera initialized:', arCamera.videoWidth, 'x', arCamera.videoHeight);
+                        
+                        // Set canvas to match video dimensions
+                        arCanvas.width = arCamera.videoWidth || 640;
+                        arCanvas.height = arCamera.videoHeight || 480;
+                        
+                        // Position canvas over video
+                        const container = document.getElementById('ar-camera-container');
+                        const rect = container.getBoundingClientRect();
+                        arCanvas.style.width = '100%';
+                        arCanvas.style.height = '100%';
+                        
+                        resolve();
+                    };
+                });
+                
+                // Start video playback
+                await arCamera.play();
+                console.log('✅ Camera feed active');
+                
+            } catch (error) {
+                console.error('❌ Camera access failed:', error);
+                // Show fallback message
+                const container = document.getElementById('ar-camera-container');
+                container.innerHTML = `
+                    <div style="color: white; text-align: center; padding: 2rem;">
+                        <i data-lucide="camera-off" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
+                        <div>Camera access required for AR features</div>
+                        <div style="font-size: 0.875rem; margin-top: 0.5rem;">Please allow camera permissions and refresh</div>
+                    </div>
+                `;
+                lucide.createIcons({ nodes: container.querySelectorAll('[data-lucide]') });
+                throw error;
+            }
+        }
+        
+        async function loadWellnessDetectionModel() {
+            console.log('🧠 Loading AI wellness detection model...');
+            arModel = await cocoSsd.load();
+            console.log('✅ AI model loaded successfully');
+        }
+        
+        async function startWellnessDetection() {
+            arDetectionActive = true;
+            detectWellnessElements();
+        }
+        
+        async function detectWellnessElements() {
+            if (!arDetectionActive || !arModel || !arCamera) return;
+            
+            try {
+                // Detect objects in current frame
+                const predictions = await arModel.detect(arCamera);
+                
+                // Clear previous overlays
+                arContext.clearRect(0, 0, arCanvas.width, arCanvas.height);
+                
+                let totalWellnessScore = 0;
+                let detectedElements = [];
+                let wellnessTips = [];
+                
+                // Process each detected object
+                predictions.forEach(prediction => {
+                    const score = wellnessScores[prediction.class] || wellnessScores['default'];
+                    totalWellnessScore += score;
+                    detectedElements.push({
+                        object: prediction.class,
+                        confidence: prediction.score,
+                        score: score,
+                        bbox: prediction.bbox
+                    });
+                    
+                    // Draw bounding box and wellness score
+                    drawWellnessOverlay(prediction, score);
+                });
+                
+                // Generate wellness tips
+                wellnessTips = generateWellnessTips(detectedElements);
+                
+                // Update UI
+                updateWellnessDisplay(totalWellnessScore, wellnessTips, detectedElements);
+                
+                // Continue detection loop
+                requestAnimationFrame(detectWellnessElements);
+                
+            } catch (error) {
+                console.error('Detection error:', error);
+                setTimeout(detectWellnessElements, 100); // Retry after short delay
+            }
+        }
+        
+        function drawWellnessOverlay(prediction, score) {
+            const [x, y, width, height] = prediction.bbox;
+            const confidence = prediction.score;
+            
+            // Scale coordinates to canvas size
+            const scaleX = arCanvas.width / arCamera.videoWidth;
+            const scaleY = arCanvas.height / arCamera.videoHeight;
+            
+            const scaledX = x * scaleX;
+            const scaledY = y * scaleY;
+            const scaledWidth = width * scaleX;
+            const scaledHeight = height * scaleY;
+            
+            // Color and style based on wellness score
+            let color = '#6b7280';
+            let glowColor = 'rgba(107, 114, 128, 0.3)';
+            
+            if (score > 8) {
+                color = '#10b981'; // bright green for excellent
+                glowColor = 'rgba(16, 185, 129, 0.4)';
+            } else if (score > 3) {
+                color = '#f59e0b'; // amber for good
+                glowColor = 'rgba(245, 158, 11, 0.4)';
+            } else if (score < 0) {
+                color = '#ef4444'; // red for negative
+                glowColor = 'rgba(239, 68, 68, 0.4)';
+            }
+            
+            // Draw glowing bounding box
+            arContext.shadowColor = color;
+            arContext.shadowBlur = 10;
+            arContext.strokeStyle = color;
+            arContext.lineWidth = 3;
+            arContext.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+            
+            // Reset shadow
+            arContext.shadowBlur = 0;
+            
+            // Draw wellness score badge with better styling
+            const badgeText = `${prediction.class}`;
+            const scoreText = score > 0 ? `+${score}` : `${score}`;
+            
+            // Measure text for better badge sizing
+            arContext.font = 'bold 14px Inter, sans-serif';
+            const textWidth = arContext.measureText(badgeText).width;
+            const badgeWidth = Math.max(textWidth + 20, 80);
+            const badgeHeight = 28;
+            
+            const badgeX = Math.max(5, scaledX);
+            const badgeY = Math.max(badgeHeight, scaledY - 5);
+            
+            // Badge background with gradient
+            const gradient = arContext.createLinearGradient(badgeX, badgeY - badgeHeight, badgeX, badgeY);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, color + '90');
+            
+            arContext.fillStyle = gradient;
+            arContext.fillRect(badgeX, badgeY - badgeHeight, badgeWidth, badgeHeight);
+            
+            // Badge border
+            arContext.strokeStyle = color;
+            arContext.lineWidth = 2;
+            arContext.strokeRect(badgeX, badgeY - badgeHeight, badgeWidth, badgeHeight);
+            
+            // Badge text
+            arContext.fillStyle = 'white';
+            arContext.font = 'bold 12px Inter, sans-serif';
+            arContext.fillText(badgeText, badgeX + 5, badgeY - 8);
+            
+            // Score indicator
+            arContext.fillStyle = score > 0 ? '#ffffff' : '#ffcccc';
+            arContext.font = 'bold 14px Inter, sans-serif';
+            arContext.fillText(scoreText, badgeX + badgeWidth - 25, badgeY - 8);
+        }
+        
+        function generateWellnessTips(elements) {
+            const tips = [];
+            const highScoreElements = elements.filter(e => e.score > 8);
+            const lowScoreElements = elements.filter(e => e.score < 0);
+            
+            if (highScoreElements.length > 0) {
+                tips.push(`✨ Great! Found ${highScoreElements.length} mood-boosting elements`);
+            }
+            
+            if (elements.some(e => e.object.includes('plant') || e.object.includes('tree'))) {
+                tips.push('🌿 Nature elements detected - excellent for stress reduction');
+            }
+            
+            if (elements.some(e => e.object.includes('bird') || e.object.includes('cat') || e.object.includes('dog'))) {
+                tips.push('🐾 Animals nearby - proven to reduce anxiety and boost mood');
+            }
+            
+            if (lowScoreElements.length > 2) {
+                tips.push('💡 Consider finding a more natural environment for better wellness');
+            }
+            
+            if (tips.length === 0) {
+                tips.push('👀 Keep scanning your environment to find wellness elements');
+            }
+            
+            return tips;
+        }
+        
+        function updateWellnessDisplay(totalScore, tips, elements) {
+            const scoreElement = document.getElementById('wellness-score-value');
+            const tipsElement = document.getElementById('wellness-tips');
+            const elementsListElement = document.getElementById('elements-list');
+            
+            // Update score with color coding
+            scoreElement.textContent = Math.max(0, totalScore);
+            scoreElement.className = 'score-value';
+            if (totalScore > 20) scoreElement.classList.add('excellent');
+            else if (totalScore > 10) scoreElement.classList.add('good');
+            else if (totalScore > 0) scoreElement.classList.add('fair');
+            else scoreElement.classList.add('poor');
+            
+            // Update detected elements list
+            if (elements.length > 0) {
+                const elementsList = elements
+                    .sort((a, b) => b.score - a.score) // Sort by wellness score
+                    .slice(0, 5) // Show top 5
+                    .map(e => {
+                        const emoji = getElementEmoji(e.object);
+                        const scoreText = e.score > 0 ? `+${e.score}` : `${e.score}`;
+                        const confidence = Math.round(e.confidence * 100);
+                        return `${emoji} ${e.object} (${scoreText}, ${confidence}%)`;
+                    })
+                    .join('<br>');
+                
+                elementsListElement.innerHTML = elementsList;
+            } else {
+                elementsListElement.innerHTML = 'Scanning environment...';
+            }
+            
+            // Update tips
+            tipsElement.innerHTML = tips.map(tip => `<div class="tip">${tip}</div>`).join('');
+            
+            console.log(`🌟 Wellness Score: ${totalScore}, Elements: ${elements.length}`);
+        }
+        
+        function getElementEmoji(objectName) {
+            const emojiMap = {
+                'plant': '🌱', 'potted plant': '🪴', 'tree': '🌳', 'flower': '🌸',
+                'cat': '🐱', 'dog': '🐶', 'bird': '🐦', 'person': '👤',
+                'car': '🚗', 'truck': '🚛', 'bus': '🚌', 'bicycle': '🚲',
+                'bench': '🪑', 'chair': '💺', 'table': '🪑',
+                'tv': '📺', 'laptop': '💻', 'phone': '📱',
+                'apple': '🍎', 'banana': '🍌', 'orange': '🍊',
+                'building': '🏢', 'house': '🏠', 'church': '⛪'
+            };
+            return emojiMap[objectName] || '📦';
+        }
+        
+        // New sidebar camera functions
+        async function initializeSidebarCamera() {
+            arCamera = document.getElementById('sidebar-camera-video');
+            arCanvas = document.getElementById('sidebar-camera-overlay');
+            arContext = arCanvas.getContext('2d');
+            
+            const constraints = {
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'environment' // Use back camera if available
+                }
+            };
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                arCamera.srcObject = stream;
+                
+                // Wait for camera to be ready
+                await new Promise((resolve) => {
+                    arCamera.onloadedmetadata = () => {
+                        console.log('📷 Sidebar camera initialized:', arCamera.videoWidth, 'x', arCamera.videoHeight);
+                        
+                        // Set canvas to match video dimensions
+                        arCanvas.width = arCamera.videoWidth || 640;
+                        arCanvas.height = arCamera.videoHeight || 480;
+                        
+                        resolve();
+                    };
+                });
+                
+                // Start video playback
+                await arCamera.play();
+                console.log('✅ Sidebar camera feed active');
+                
+            } catch (error) {
+                console.error('❌ Sidebar camera access failed:', error);
+                throw error;
+            }
+        }
+        
+        async function startSidebarWellnessDetection() {
+            arDetectionActive = true;
+            detectSidebarWellnessElements();
+        }
+        
+        async function detectSidebarWellnessElements() {
+            if (!arDetectionActive || !arModel || !arCamera) return;
+            
+            try {
+                // Detect objects in current frame
+                const predictions = await arModel.detect(arCamera);
+                
+                // Clear previous overlays
+                arContext.clearRect(0, 0, arCanvas.width, arCanvas.height);
+                
+                let totalWellnessScore = 0;
+                let detectedElements = [];
+                
+                // Process each detected object
+                predictions.forEach(prediction => {
+                    const score = wellnessScores[prediction.class] || wellnessScores['default'];
+                    totalWellnessScore += score;
+                    detectedElements.push({
+                        object: prediction.class,
+                        confidence: prediction.score,
+                        score: score,
+                        bbox: prediction.bbox
+                    });
+                    
+                    // Draw bounding box and wellness score
+                    drawSidebarWellnessOverlay(prediction, score);
+                });
+                
+                // Update sidebar display
+                updateSidebarWellnessDisplay(totalWellnessScore, detectedElements);
+                
+                // Continue detection loop
+                requestAnimationFrame(detectSidebarWellnessElements);
+                
+            } catch (error) {
+                console.error('Sidebar detection error:', error);
+                setTimeout(detectSidebarWellnessElements, 100);
+            }
+        }
+        
+        function drawSidebarWellnessOverlay(prediction, score) {
+            const [x, y, width, height] = prediction.bbox;
+            
+            // Scale coordinates to canvas size
+            const scaleX = arCanvas.width / arCamera.videoWidth;
+            const scaleY = arCanvas.height / arCamera.videoHeight;
+            
+            const scaledX = x * scaleX;
+            const scaledY = y * scaleY;
+            const scaledWidth = width * scaleX;
+            const scaledHeight = height * scaleY;
+            
+            // Color based on wellness score
+            let color = '#6b7280';
+            if (score > 8) color = '#10b981'; // bright green
+            else if (score > 3) color = '#f59e0b'; // amber
+            else if (score < 0) color = '#ef4444'; // red
+            
+            // Draw compact bounding box
+            arContext.strokeStyle = color;
+            arContext.lineWidth = 2;
+            arContext.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+            
+            // Draw small score indicator
+            arContext.fillStyle = color;
+            arContext.fillRect(scaledX, scaledY - 15, 30, 15);
+            arContext.fillStyle = 'white';
+            arContext.font = '10px Inter, sans-serif';
+            arContext.fillText(score > 0 ? `+${score}` : `${score}`, scaledX + 3, scaledY - 3);
+        }
+        
+        function updateSidebarWellnessDisplay(totalScore, elements) {
+            const scoreElement = document.getElementById('sidebar-wellness-score');
+            const itemsElement = document.querySelector('.items-scroll');
+            
+            // Update score
+            scoreElement.textContent = Math.max(0, totalScore);
+            scoreElement.style.color = totalScore > 20 ? '#10b981' : totalScore > 10 ? '#f59e0b' : totalScore > 0 ? '#6b7280' : '#ef4444';
+            
+            // Update detected items
+            if (elements.length > 0) {
+                const itemsList = elements
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 3) // Show top 3
+                    .map(e => {
+                        const emoji = getElementEmoji(e.object);
+                        const scoreText = e.score > 0 ? `+${e.score}` : `${e.score}`;
+                        return `${emoji} ${e.object} (${scoreText})`;
+                    })
+                    .join('<br>');
+                
+                itemsElement.innerHTML = itemsList;
+            } else {
+                itemsElement.innerHTML = 'Scanning environment...';
+            }
+        }
+
+        function closeARWellness() {
+            arDetectionActive = false;
+            
+            // Stop camera stream
+            if (arCamera && arCamera.srcObject) {
+                const tracks = arCamera.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                arCamera.srcObject = null;
+            }
+            
+            // Hide sidebar camera
+            document.getElementById('sidebar-camera').style.display = 'none';
+            
+            console.log('📱 AR Wellness Scanner closed');
+        }
+        
+        // Save anonymized mood data for community clustering
+        async function saveAnonymizedMoodData(moodEntry) {
+            if (!isAuthInitialized) {
+                console.log('⚠️ Skipping anonymized mood data save - not authenticated');
+                return;
+            }
+            
+            try {
+                // Create anonymized entry - no personal data, just location + mood + time
+                const anonymizedEntry = {
+                    moodScore: moodEntry.mood,
+                    // Round coordinates to protect privacy (approximately 100m precision)
+                    lat: Math.round(moodEntry.location.latitude * 1000) / 1000,
+                    lng: Math.round(moodEntry.location.longitude * 1000) / 1000,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    // Add time context for temporal analysis
+                    hour: new Date().getHours(),
+                    dayOfWeek: new Date().getDay()
+                };
+
+                await db.collection('communityMoods').add(anonymizedEntry);
+                console.log('✅ Anonymized mood data saved for community clustering');
+            } catch (error) {
+                console.error('❌ Error saving anonymized mood data:', error);
+                // Don't throw - this shouldn't prevent personal mood saving
+            }
+        }
+
+        // Generate community mood heatmap
+        async function loadCommunityMoodHeatmap() {
+            try {
+                console.log('🌍 Loading community mood heatmap...');
+                console.log('🔧 Heatmap function available:', typeof createCustomHeatmapOverlay);
+                
+                // Get mood data from last 7 days
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                
+                const snapshot = await db.collection('communityMoods')
+                    .where('timestamp', '>=', sevenDaysAgo)
+                    .get();
+
+                const moodPoints = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    moodPoints.push({
+                        location: new google.maps.LatLng(data.lat, data.lng),
+                        weight: data.moodScore // 1-5 scale, higher = better mood
+                    });
+                });
+
+                if (moodPoints.length > 0) {
+                    console.log(`📊 Found ${moodPoints.length} community mood data points`);
+                    
+                    // Create modern custom heatmap overlay
+                    const customHeatmap = createCustomHeatmapOverlay(moodPoints, map);
+
+                    // Store reference for toggling
+                    window.communityHeatmap = customHeatmap;
+                    
+                    showNotification(`Community mood heatmap loaded! ${moodPoints.length} data points`, 'success');
+                } else {
+                    showNotification('No community mood data available yet', 'info');
+                }
+            } catch (error) {
+                console.error('❌ Error loading community mood heatmap:', error);
+                showNotification('Error loading community mood data', 'error');
+            }
+        }
+
+        // Toggle community mood heatmap visibility
+        function toggleCommunityMoodHeatmap() {
+            if (window.communityHeatmap) {
+                if (window.communityHeatmap.isVisible) {
+                    window.communityHeatmap.hide();
+                    showNotification('Community mood heatmap hidden', 'info');
+                } else {
+                    window.communityHeatmap.show();
+                    showNotification('Community mood heatmap shown', 'info');
+                }
+            } else {
+                // Load heatmap if not already loaded
+                loadCommunityMoodHeatmap();
+            }
+        }
+
+        // 🎮 GAMIFIED POINTS SYSTEM
+        
+        let userPoints = parseInt(localStorage.getItem('wellnessPoints')) || 0;
+        let dailyStreak = parseInt(localStorage.getItem('dailyStreak')) || 0;
+        let lastScanDate = localStorage.getItem('lastScanDate') || '';
+        let totalARScans = parseInt(localStorage.getItem('totalARScans')) || 0;
+        let achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+        
+        // Initialize points display
+        function initializePointsSystem() {
+            updatePointsDisplay();
+        }
+        
+        function updatePointsDisplay() {
+            document.getElementById('user-points').textContent = userPoints;
+            
+            // Update daily streak
+            const today = new Date().toDateString();
+            if (lastScanDate !== today) {
+                // Check if streak should continue (yesterday) or reset
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (lastScanDate === yesterday.toDateString()) {
+                    dailyStreak += 1;
+                } else if (lastScanDate !== today) {
+                    dailyStreak = 0;
+                }
+                
+                lastScanDate = today;
+                localStorage.setItem('lastScanDate', lastScanDate);
+                localStorage.setItem('dailyStreak', dailyStreak);
+            }
+        }
+        
+        function earnPoints(amount, reason = 'AR Scan') {
+            userPoints += amount;
+            totalARScans += 1;
+            
+            // Save to localStorage
+            localStorage.setItem('wellnessPoints', userPoints);
+            localStorage.setItem('totalARScans', totalARScans);
+            
+            // Update display
+            updatePointsDisplay();
+            
+            // Show points earned notification
+            showPointsNotification(amount, reason);
+            
+            // Check for achievements
+            checkAchievements();
+        }
+        
+        function showPointsNotification(points, reason) {
+            const notification = document.createElement('div');
+            notification.className = 'points-notification';
+            notification.innerHTML = `
+                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                    <span>🌟</span>
+                    <span>+${points} points from ${reason}!</span>
+                </div>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out forwards;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+        
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            // Nature Explorer Achievement
+            if (totalARScans >= 10 && !achievements.includes('nature-explorer')) {
+                achievements.push('nature-explorer');
+                newAchievements.push('Nature Explorer - Completed 10 AR scans!');
+            }
+            
+            // Wellness Master Achievement
+            if (totalARScans >= 50 && !achievements.includes('wellness-master')) {
+                achievements.push('wellness-master');
+                newAchievements.push('Wellness Master - Completed 50 AR scans!');
+            }
+            
+            // Streak Champion Achievement
+            if (dailyStreak >= 7 && !achievements.includes('streak-champion')) {
+                achievements.push('streak-champion');
+                newAchievements.push('Streak Champion - 7 day scanning streak!');
+            }
+            
+            // Save achievements
+            if (newAchievements.length > 0) {
+                localStorage.setItem('achievements', JSON.stringify(achievements));
+                
+                // Show achievement notification
+                newAchievements.forEach(achievement => {
+                    setTimeout(() => showAchievementNotification(achievement), 1000);
+                });
+            }
+        }
+        
+        function showAchievementNotification(achievement) {
+            const notification = document.createElement('div');
+            notification.className = 'achievement-notification';
+            notification.innerHTML = `
+                <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 1rem 1.25rem; border-radius: 0.75rem; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; min-width: 300px;">
+                    <span style="font-size: 1.5rem;">🏆</span>
+                    <div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">Achievement Unlocked!</div>
+                        <div>${achievement}</div>
+                    </div>
+                </div>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 4rem;
+                right: 1rem;
+                z-index: 10000;
+                animation: achievementPop 0.5s ease-out forwards;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+        
+        function openPointsShop() {
+            // Prevent multiple modals
+            if (document.querySelector('.shop-modal-backdrop')) return;
+            
+            try {
+                // Get current values safely
+                const currentPoints = parseInt(localStorage.getItem('wellnessPoints')) || 0;
+                const currentAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+                
+                const modal = document.createElement('div');
+                modal.className = 'shop-modal-backdrop';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                `;
+                
+                const shopItems = [
+                    { id: 'mood-boost', name: '🎯 Mood Boost Challenge', desc: 'Unlock personalized mood exercises', cost: 50 },
+                    { id: 'streak-multiplier', name: '⚡ AR Streak Multiplier', desc: 'Double points for next 3 scans', cost: 100 },
+                    { id: 'wellness-guide', name: '📋 Personalized Wellness Guide', desc: 'Custom wellness plan based on your scans', cost: 200 }
+                ];
+                
+                let itemsHTML = '';
+                shopItems.forEach(item => {
+                    const canBuy = currentPoints >= item.cost;
+                    const buttonText = canBuy ? 'Buy' : `Need ${item.cost - currentPoints} more`;
+                    const buttonStyle = canBuy ? 'background: #8b5cf6; cursor: pointer;' : 'background: #9ca3af; cursor: not-allowed; opacity: 0.6;';
+                    
+                    itemsHTML += `
+                        <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937;">${item.name}</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">${item.desc}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #8b5cf6;">${item.cost} points</div>
+                                <button class="shop-buy-btn" data-item="${item.id}" data-cost="${item.cost}" ${!canBuy ? 'disabled' : ''} 
+                                    style="margin-top: 0.25rem; padding: 0.25rem 0.75rem; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; ${buttonStyle}">
+                                    ${buttonText}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Create modal content using DOM methods instead of innerHTML
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = 'background: white; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;';
+                
+                // Header
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;';
+                
+                const title = document.createElement('h3');
+                title.style.cssText = 'color: #8b5cf6; margin: 0;';
+                title.textContent = '🛍️ Wellness Points Shop';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'close-shop-btn';
+                closeBtn.style.cssText = 'background: none; border: none; font-size: 1.5rem; cursor: pointer;';
+                closeBtn.textContent = '×';
+                
+                header.appendChild(title);
+                header.appendChild(closeBtn);
+                
+                // Points display
+                const pointsSection = document.createElement('div');
+                pointsSection.style.cssText = 'text-align: center; margin-bottom: 1.5rem;';
+                pointsSection.innerHTML = '<div style="font-size: 1.125rem; color: #6b7280;">Current Points</div><div style="font-size: 2rem; font-weight: bold; color: #10b981;">' + currentPoints + '</div>';
+                
+                // Items container
+                const itemsContainer = document.createElement('div');
+                itemsContainer.innerHTML = itemsHTML;
+                
+                // Footer
+                const footer = document.createElement('div');
+                footer.style.cssText = 'margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; text-align: center;';
+                footer.innerHTML = '<div style="color: #6b7280; font-size: 0.875rem;">Complete AR scans and mood tracking to earn more points!</div>';
+                
+                // Assemble modal
+                modalContent.appendChild(header);
+                modalContent.appendChild(pointsSection);
+                modalContent.appendChild(itemsContainer);
+                modalContent.appendChild(footer);
+                modal.appendChild(modalContent);
+                
+                document.body.appendChild(modal);
+                
+                // Add close functionality
+                closeBtn.addEventListener('click', () => {
+                    modal.remove();
+                });
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+                
+                // Add buy button functionality
+                modal.querySelectorAll('.shop-buy-btn:not([disabled])').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const cost = parseInt(btn.dataset.cost);
+                        const item = btn.dataset.item;
+                        purchaseItem(item, cost);
+                        modal.remove();
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error opening shop:', error);
+                showNotification('Unable to open shop. Please try again.', 'error');
+            }
+        }
+        
+        function purchaseItem(item, cost) {
+            userPoints -= cost;
+            localStorage.setItem('wellnessPoints', userPoints);
+            updatePointsDisplay();
+            
+            const items = {
+                'mood-boost': '🎯 Mood Boost Challenge unlocked!',
+                'streak-multiplier': '⚡ AR Streak Multiplier activated!',
+                'wellness-guide': '📋 Personalized Wellness Guide unlocked!'
+            };
+            
+            showNotification(items[item] || 'Item purchased!', 'success');
+        }
+        
+        // Modified sidebar wellness detection to award points
+        function updateSidebarWellnessDisplay(totalScore, elements) {
+            const scoreElement = document.getElementById('sidebar-wellness-score');
+            const itemsElement = document.querySelector('.items-scroll');
+            
+            // Update score
+            scoreElement.textContent = Math.max(0, totalScore);
+            scoreElement.style.color = totalScore > 20 ? '#10b981' : totalScore > 10 ? '#f59e0b' : totalScore > 0 ? '#6b7280' : '#ef4444';
+            
+            // Award points for positive wellness scores
+            if (totalScore > 0 && elements.some(e => e.score > 5)) {
+                const pointsEarned = Math.min(totalScore, 10); // Cap at 10 points per scan
+                earnPoints(pointsEarned, 'Wellness Scan');
+            }
+            
+            // Update detected items
+            if (elements.length > 0) {
+                const itemsList = elements
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 3) // Show top 3
+                    .map(e => {
+                        const emoji = getElementEmoji(e.object);
+                        const scoreText = e.score > 0 ? `+${e.score}` : `${e.score}`;
+                        return `${emoji} ${e.object} (${scoreText})`;
+                    })
+                    .join('<br>');
+                
+                itemsElement.innerHTML = itemsList;
+            } else {
+                itemsElement.innerHTML = 'Scanning environment...';
+            }
+        }
+        
+        // Initialize points system on load
+        document.addEventListener('DOMContentLoaded', initializePointsSystem);
+        
+        // Service Worker registration for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'mindmap-v1';
+                    const urlsToCache = ['/', '/index.html'];
+                    
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('✅ Service Worker registered for offline support'))
+                    .catch(err => console.log('❌ Service Worker registration failed:', err));
+            });
+        }
+        
+        // Prevent app from sleeping on mobile devices
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('🔋 Screen wake lock active');
+                }
+            } catch (err) {
+                console.log('⚡ Wake lock not supported or failed:', err);
+            }
+        }
+        
+        // Re-acquire wake lock when app becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && wakeLock === null) {
+                requestWakeLock();
+            }
+        });
+        
+        // Initial wake lock request
+        window.addEventListener('load', requestWakeLock);
+    </script>
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-purple: #8b5cf6;
+            --primary-red: #ef4444;
+            --bg-color: #f9fafb;
+            --surface-color: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+        }
+        
+        /* iPhone-specific optimizations */
+        @supports (-webkit-appearance: none) and (stroke-color: transparent) {
+            .sidebar {
+                padding-top: max(1rem, env(safe-area-inset-top));
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+                padding-left: max(1rem, env(safe-area-inset-left));
+            }
+            
+            #map {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: none;
+            background-color: transparent;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            text-align: left;
+        }
+
+        .sidebar-btn i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-btn:hover {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .sidebar-btn.emergency-btn {
+            margin-top: auto;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--primary-red);
+            font-weight: 600;
+        }
+
+        .sidebar-btn.emergency-btn:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .sidebar-btn.loading {
+            cursor: wait;
+            background-color: var(--bg-color);
+        }
+
+        .sidebar-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #app {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-backdrop.visible {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-backdrop.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        #mood-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #mood-note {
+            width: 100%;
+            height: 100px;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            resize: vertical;
+            font-family: var(--font-sans);
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-purple);
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .primary-btn:hover {
+            background-color: #7c3aed;
+        }
+
+        .panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100%;
+            background-color: var(--surface-color);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1.5rem;
+        }
+
+        .panel:not(.hidden) {
+            transform: translateX(0);
+        }
+
+        .panel-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .panel-content h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-panel-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .close-panel-btn:hover {
+            background-color: var(--bg-color);
+        }
+
+        /* Sleek Exit Button Styles */
+        .analytics-exit-container {
+            position: sticky;
+            bottom: 0;
+            background: var(--surface-color);
+            padding: 1.5rem;
+            margin: 1.5rem -1.5rem 0 -1.5rem;
+            border-top: 1px solid var(--border-color);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .analytics-exit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analytics-exit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .analytics-exit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .analytics-exit-btn:hover::before {
+            left: 100%;
+        }
+
+        .analytics-exit-btn:active {
+            transform: translateY(0);
+        }
+
+        .analytics-exit-btn i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Mobile responsiveness for exit button */
+        @media (max-width: 768px) {
+            .analytics-exit-container {
+                padding: 1rem;
+                margin: 1rem -1rem -1rem -1rem;
+            }
+            
+            .analytics-exit-btn {
+                padding: 0.875rem 1.25rem;
+                font-size: 0.9rem;
+            }
+            
+            .analytics-exit-btn i {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-bottom: 1.5rem;
+        }
+
+        #insights-text {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            min-height: 100px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 350px);
+        }
+
+        #view-insights {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--surface-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 998;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        #view-insights:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        /* AR Wellness Modal Styles */
+        .ar-modal-content {
+            background: var(--surface-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .ar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .ar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ar-content {
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        #ar-camera-container {
+            position: relative;
+            flex: 2;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #ar-camera {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+            border-radius: 12px;
+        }
+
+        #ar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .ar-status {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ar-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .ar-loading i {
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        .wellness-score {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .score-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            min-width: 80px;
+        }
+
+        .score-value.excellent {
+            background: #10b981;
+            color: white;
+        }
+
+        .score-value.good {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .score-value.fair {
+            background: #6b7280;
+            color: white;
+        }
+
+        .score-value.poor {
+            background: #ef4444;
+            color: white;
+        }
+
+        .detected-elements {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .elements-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .elements-list {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .wellness-tips {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .tip {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        /* Sidebar Camera Styles */
+        .sidebar-camera {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            position: relative;
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .camera-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .camera-preview-container {
+            position: relative;
+            aspect-ratio: 4/3;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #sidebar-camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #sidebar-camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .camera-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        #sidebar-wellness-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .detected-items {
+            padding: 0.75rem;
+            background: var(--bg-color);
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .items-scroll {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        /* Points System Styles */
+        .points-display {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .points-shop-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .points-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .points-streak {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Shop Modal Styles */
+        .shop-modal-content {
+            background: var(--surface-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .user-points-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .shop-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(80vh - 100px);
+        }
+
+        .shop-category {
+            margin-bottom: 2rem;
+        }
+
+        .shop-category h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .shop-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .shop-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .item-icon {
+            font-size: 2rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .item-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .item-cost {
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
+        .buy-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .buy-btn:hover {
+            background: #059669;
+        }
+
+        .buy-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .achievement {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .achievement.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-progress {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
+        @media (max-width: 768px) {
+            .ar-modal-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .ar-content {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .ar-status {
+                flex: none;
+            }
+
+            .sidebar-camera {
+                margin-top: 0.5rem;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 95vw;
+                max-width: 400px;
+                z-index: 1000;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+
+            .camera-preview-container {
+                aspect-ratio: 4/3;
+                min-height: 300px;
+            }
+
+            .camera-header {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+
+            .detected-items {
+                padding: 1rem;
+                max-height: 150px;
+            }
+
+            .items-scroll {
+                font-size: 0.9rem;
+            }
+        }
+
+        #notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast-notification {
+            min-width: 300px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            transform: translateX(100%);
+            animation: slideIn 0.5s forwards;
+        }
+
+        .toast-notification.success {
+            background-color: #22c55e;
+        }
+
+        .toast-notification.error {
+            background-color: #ef4444;
+        }
+
+        .toast-notification.info {
+            background-color: #3b82f6;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 0.5rem;
+                gap: 0.25rem;
+            }
+
+            .sidebar-btn {
+                flex-direction: column;
+                padding: 0.5rem;
+                font-size: 0.75rem;
+                gap: 0.25rem;
+            }
+
+            .sidebar-btn span {
+                white-space: nowrap;
+            }
+
+            .sidebar-btn.emergency-btn {
+                margin-top: 0;
+                margin-left: auto;
+            }
+
+            .panel {
+                width: 100%;
+                height: 90vh;
+                top: auto;
+                bottom: 0;
+                transform: translateY(100%);
+                box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            }
+
+            .panel:not(.hidden) {
+                transform: translateY(0);
+            }
+
+            #view-insights {
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            #mood-buttons {
+                flex-wrap: wrap;
+            }
+
+            .mood-btn-container {
+                flex-basis: calc(50% - 0.25rem);
+            }
+        }
+    </style>
+    

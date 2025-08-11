@@ -16,7 +16,7 @@ A mental health tracking and analysis platform combining geographic mapping, AI-
 - Environmental psychology and urban planning insights
 - Personalized mental health intervention systems
 
-##  Architecture Overview
+## Architecture Overview
 
 ```
 mindmap-app/
@@ -118,10 +118,10 @@ npm run jupyter        # Jupyter Lab on :8888
 -  **Gamification**: Evidence-based engagement mechanisms
 
 ### Research Capabilities
--  **Statistical Analysis**: Comprehensive statistical testing suites
--  **Machine Learning**: Predictive models for mental health outcomes
--  **Geospatial Analysis**: Geographic information system integration
--  **Clinical Assessments**: Standardized mental health measurement tools
+- **Statistical Analysis**: Comprehensive statistical testing suites
+- **Machine Learning**: Predictive models for mental health outcomes
+- **Geospatial Analysis**: Geographic information system integration
+- **Clinical Assessments**: Standardized mental health measurement tools
 - **Longitudinal Studies**: Time-series analysis capabilities
 
 ##  Testing & Quality Assurance
@@ -175,9 +175,9 @@ docker-compose -f docker-compose.prod.yml up -d
 - Kubernetes manifests included
 - CI/CD pipeline configuration
 
-##  Contributing
+## Contributing
 
-This project welcomes contributions from researchers, developers, and mental health professionals. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+This project welcomes contributions from researchers, developers, and mental health professionals.
 
 ### Research Collaboration
 - Open to academic partnerships
@@ -189,8 +189,8 @@ This project welcomes contributions from researchers, developers, and mental hea
 MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contact
-- Bronsonsalazar629@gmail.com
 
+- Email: Bronsonsalazar629@gmail.com
 ---
 
 *This platform is designed for research purposes and should not be used as a substitute for professional mental health care.*
