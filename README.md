@@ -1,8 +1,8 @@
 # MindMap: Mental Health Geography Platform
 
-A research-grade mental health tracking and analysis platform combining geographic mapping, AI-powered analytics, and comprehensive data science capabilities for mental health research and intervention.
+A mental health tracking and analysis platform combining geographic mapping, AI-powered analytics, and comprehensive data science capabilities for mental health research and intervention.
 
-## 🎯 Research Objectives
+## Research Objectives
 
 ### Primary Research Goals
 - **Geographic Mental Health Patterns**: Analyze correlations between location, environmental factors, and mental health outcomes
@@ -16,7 +16,7 @@ A research-grade mental health tracking and analysis platform combining geograph
 - Environmental psychology and urban planning insights
 - Personalized mental health intervention systems
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 ```
 mindmap-app/
@@ -38,7 +38,7 @@ mindmap-app/
 └── tests/                # Testing suites
 ```
 
-## 🚀 Quick Setup
+## Quick Setup
 
 ### Prerequisites
 - Node.js >= 18.0.0
@@ -82,7 +82,7 @@ npm run dev:backend     # Backend API on :5000
 npm run jupyter        # Jupyter Lab on :8888
 ```
 
-## 🔬 Data Science Environment
+## Data Science Environment
 
 ### Jupyter Lab Access
 - URL: `http://localhost:8888`
@@ -96,7 +96,7 @@ npm run jupyter        # Jupyter Lab on :8888
 4. **Modeling**: Machine learning model development
 5. **Validation**: Cross-validation and performance metrics
 
-## 🛡️ Dual Backend Architecture
+## Dual Backend Architecture
 
 ### PostgreSQL (Primary Research Database)
 - **Use Case**: Research data storage, complex analytics
@@ -108,23 +108,23 @@ npm run jupyter        # Jupyter Lab on :8888
 - **Features**: Real-time sync, offline support, authentication
 - **Migration Path**: Gradual transition to PostgreSQL
 
-## 🌟 Key Features
+## Key Features
 
 ### Core Platform
-- 📍 **Geographic Mood Tracking**: Location-based mental health data collection
-- 🤖 **AI-Powered Analytics**: Machine learning insights and predictions
-- 📊 **Advanced Visualizations**: Interactive charts and geographic heatmaps
-- 🔍 **AR Wellness Scanner**: Computer vision for wellness assessment
-- 🎮 **Gamification**: Evidence-based engagement mechanisms
+-  **Geographic Mood Tracking**: Location-based mental health data collection
+-  **AI-Powered Analytics**: Machine learning insights and predictions
+-  **Advanced Visualizations**: Interactive charts and geographic heatmaps
+-  **AR Wellness Scanner**: Computer vision for wellness assessment
+-  **Gamification**: Evidence-based engagement mechanisms
 
 ### Research Capabilities
-- 📈 **Statistical Analysis**: Comprehensive statistical testing suites
-- 🧠 **Machine Learning**: Predictive models for mental health outcomes
-- 🗺️ **Geospatial Analysis**: Geographic information system integration
-- 📋 **Clinical Assessments**: Standardized mental health measurement tools
-- 🔬 **Longitudinal Studies**: Time-series analysis capabilities
+-  **Statistical Analysis**: Comprehensive statistical testing suites
+-  **Machine Learning**: Predictive models for mental health outcomes
+-  **Geospatial Analysis**: Geographic information system integration
+-  **Clinical Assessments**: Standardized mental health measurement tools
+- **Longitudinal Studies**: Time-series analysis capabilities
 
-## 🧪 Testing & Quality Assurance
+##  Testing & Quality Assurance
 
 ### Testing Strategy
 ```bash
@@ -147,21 +147,18 @@ npm run typecheck      # TypeScript validation
 - Secret detection
 - Test execution
 
-## 📊 Research Ethics & Privacy
+## Research Ethics & Privacy
 
 ### Data Protection
-- **HIPAA Compliance**: Healthcare data protection standards
-- **GDPR Compliance**: European data protection regulations
 - **Anonymization**: Personal identifiers removed from research datasets
 - **Consent Management**: Granular consent tracking and management
 
 ### Research Ethics
-- IRB approval processes integrated
 - Participant consent workflows
 - Data retention policies
 - Research data sharing protocols
 
-## 🚀 Deployment
+## Deployment
 
 ### Development
 ```bash
@@ -178,14 +175,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - Kubernetes manifests included
 - CI/CD pipeline configuration
 
-## 📚 Documentation
-
-- [API Reference](docs/api/README.md)
-- [Research Methodology](docs/research/README.md)
-- [Deployment Guide](docs/deployment/README.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
-
-## 🤝 Contributing
+##  Contributing
 
 This project welcomes contributions from researchers, developers, and mental health professionals. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -194,21 +184,12 @@ This project welcomes contributions from researchers, developers, and mental hea
 - Data sharing agreements available
 - Publication collaboration opportunities
 
-## 📄 License
+## License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
-## 🔗 Related Resources
-
-- [Mental Health Research Best Practices](https://example.com/research-guidelines)
-- [Geographic Information Systems for Health](https://example.com/gis-health)
-- [AI Ethics in Healthcare](https://example.com/ai-ethics)
-
-## 📞 Contact
-
-- **Research Inquiries**: research@mindmap-platform.org
-- **Technical Support**: support@mindmap-platform.org
-- **General**: info@mindmap-platform.org
+## Contact
+- Bronsonsalazar629@gmail.com
 
 ---
 
