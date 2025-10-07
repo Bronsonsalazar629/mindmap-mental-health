@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SunPath AI Design System - Nature's Embrace
+All colors are HSL values representing our cultural color story
+*/
+
+@layer base {
+  :root {
+    /* Core Brand Colors - Nature's Embrace */
+    --sun-bright: 45 96% 57%;          /* #FBBF24 - Bright Marigold */
+    --sea-calm: 183 62% 76%;           /* #A8DADC - Light Teal */
+    --stone-stable: 220 13% 46%;       /* #6B7280 - Cool Slate Gray */
+    --wisdom-deep: 218 84% 16%;        /* #1E3A8A - Dark Navy */
+    --sand-pure: 210 17% 97%;          /* #F8F9FA - Pure Off-White */
+    
+    /* Semantic Design Tokens */
+    --background: 210 17% 97%;         /* Pure Off-White - breathing space */
+    --foreground: 218 84% 16%;         /* Dark Navy - wisdom text */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 218 84% 16%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 84% 16%;
+    
+    --primary: 45 96% 57%;             /* Bright Marigold - warm energy */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 183 62% 76%;          /* Light Teal - peaceful mind */
+    --secondary-foreground: 218 84% 16%;
+    
+    --muted: 210 17% 94%;
+    --muted-foreground: 220 13% 46%;
+    
+    --accent: 220 13% 46%;             /* Cool Slate Gray - trust */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 210 17% 90%;
+    --input: 210 17% 90%;
+    --ring: 45 96% 57%;
+    
+    --radius: 1rem;
+    
+    /* Cultural Gradients */
+    --gradient-sunrise: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-peaceful: linear-gradient(180deg, hsl(var(--secondary)), hsl(var(--background)));
+    --gradient-warm: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--secondary) / 0.1));
+    
+    /* Emotional Shadows */
+    --shadow-gentle: 0 4px 20px hsl(var(--primary) / 0.1);
+    --shadow-embrace: 0 8px 32px hsl(var(--secondary) / 0.2);
+    --shadow-wisdom: 0 2px 16px hsl(var(--stone-stable) / 0.15);
+    
+    /* Cultural Animation Timing */
+    --transition-gentle: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-breath: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  /* Cultural Button Variants */
+  .btn-sunrise {
+    @apply bg-gradient-to-r from-primary to-secondary text-white;
+    @apply hover:shadow-[var(--shadow-embrace)] transition-[var(--transition-gentle)];
+    @apply rounded-[var(--radius)] px-6 py-3 font-medium;
+  }
+  
+  .btn-gentle {
+    @apply bg-secondary/20 text-secondary-foreground border border-secondary/30;
+    @apply hover:bg-secondary/30 hover:shadow-[var(--shadow-gentle)];
+    @apply transition-[var(--transition-gentle)] rounded-[var(--radius)] px-4 py-2;
+  }
+  
+  /* Cultural Card Variants */
+  .card-embrace {
+    @apply bg-card border border-border/50 rounded-[var(--radius)];
+    @apply shadow-[var(--shadow-gentle)] hover:shadow-[var(--shadow-embrace)];
+    @apply transition-[var(--transition-gentle)];
+  }
+  
+  .card-warm {
+    @apply bg-gradient-to-br from-primary/5 to-secondary/5;
+    @apply border border-primary/20 rounded-[var(--radius)];
+    @apply shadow-[var(--shadow-gentle)];
+  }
+  
+  /* Breathing Animation for Wellness */
+  .breathe {
+    animation: breathe 4s ease-in-out infinite;
+  }
+  
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+  
+  /* Cultural Text Styles */
+  .text-wisdom {
+    @apply text-foreground font-medium leading-relaxed;
+  }
+  
+  .text-gentle {
+    @apply text-muted-foreground leading-relaxed;
+  }
+}
