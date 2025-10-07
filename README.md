@@ -1,4 +1,4 @@
-# MindMap: Mental Health Geography Platform
+# Sunpath AI: Mental Health Resource Allocation & Log 
 
 A mental health tracking and analysis platform combining geographic mapping, AI-powered analytics, and comprehensive data science capabilities for mental health research and intervention.
 
@@ -113,9 +113,7 @@ npm run jupyter        # Jupyter Lab on :8888
 ### Core Platform
 -  **Geographic Mood Tracking**: Location-based mental health data collection
 -  **AI-Powered Analytics**: Machine learning insights and predictions
--  **Advanced Visualizations**: Interactive charts and geographic heatmaps
--  **AR Wellness Scanner**: Computer vision for wellness assessment
--  **Gamification**: Evidence-based engagement mechanisms
+-  **Advanced Visualizations**: Interactive charts and geographic heatmap
 
 ### Research Capabilities
 - **Statistical Analysis**: Comprehensive statistical testing suites
