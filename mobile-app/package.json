@@ -1,0 +1,35 @@
+{
+  "name": "sunpath-ai-mobile",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "SunPath AI - Navigate Your Path to Mental Wellness",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "dev": "expo start --dev-client",
+    "build:android": "expo build:android",
+    "build:ios": "expo build:ios"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~54.0.12",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-web": "^0.21.0"
+  },
+  "keywords": [
+    "sunpath",
+    "ai",
+    "mental-health",
+    "wellness",
+    "mobile",
+    "react-native",
+    "expo"
+  ],
+  "author": "SunPath AI Team",
+  "private": true
+}

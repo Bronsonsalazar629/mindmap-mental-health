@@ -19,18 +19,34 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
+    container_name: mindmap-backend
     ports:
-      - "5000:5000"
+      - "8000:8000"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend/src:/app/src
+      - ./backend/.env.example:/app/.env
     environment:
-      - NODE_ENV=development
+      - ENVIRONMENT=development
+      - DEBUG=true
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/mindmap
-      - FIREBASE_CONFIG_PATH=/app/src/config/firebase-config.js
+      - REDIS_URL=redis://:mindmap_redis_pass@redis:6379/0
+      - SECRET_KEY=development-secret-key-change-in-production
+      - PSEUDONYMIZATION_SALT=development-salt-change-in-production
+      - BIAS_DETECTION_ENABLED=true
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mindmap-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
   data-science:
     build:
@@ -43,39 +59,94 @@ services:
       - ./data-science/data:/workspace/data
     environment:
       - JUPYTER_ENABLE_LAB=yes
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/mindmap
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mindmap-network
 
   postgres:
-    image: postgres:15
+    image: postgis/postgis:15-3.3-alpine
+    container_name: mindmap-postgres
     environment:
       POSTGRES_DB: mindmap
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - mindmap-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mindmap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
+    container_name: mindmap-redis
+    command: redis-server --appendonly yes --requirepass mindmap_redis_pass
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - mindmap-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   nginx:
     image: nginx:alpine
+    container_name: mindmap-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
       - frontend
       - backend
+    networks:
+      - mindmap-network
+    restart: unless-stopped
+
+  # Database admin interface (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mindmap-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@mindmap.org
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - mindmap-network
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  mindmap-network:
+    driver: bridge

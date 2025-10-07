@@ -40,13 +40,24 @@ pymongo>=4.4.0
 
 # Web framework for API
 fastapi>=0.100.0
-uvicorn>=0.22.0
+uvicorn[standard]>=0.22.0
 pydantic>=2.0.0
+pydantic[email]>=2.0.0
 
 # Authentication and security
-python-jose>=3.3.0
-passlib>=1.7.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.0
 bcrypt>=4.0.0
+firebase-admin>=6.2.0
+python-multipart>=0.0.6
+
+# Middleware and rate limiting
+slowapi>=0.1.8
+redis>=4.6.0
+
+# Database and ORM
+alembic>=1.11.0
+geoalchemy2>=0.14.0
 
 # Environment and configuration
 python-dotenv>=1.0.0

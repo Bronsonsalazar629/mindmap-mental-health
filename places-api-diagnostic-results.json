@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-09-16T14:43:51.694Z",
+  "tests": [
+    {
+      "name": "Text Search",
+      "url": "https://maps.googleapis.com/maps/api/place/textsearch/json?query=mental%20health%20facilities%20near%20Seattle&key=API_KEY_HIDDEN",
+      "duration": 1468,
+      "status": 200,
+      "success": true,
+      "resultCount": 20,
+      "quota": "OK"
+    },
+    {
+      "name": "Nearby Search",
+      "url": "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=47.6062,-122.3321&radius=50000&type=hospital&key=API_KEY_HIDDEN",
+      "duration": 387,
+      "status": 200,
+      "success": true,
+      "resultCount": 20,
+      "quota": "OK"
+    },
+    {
+      "name": "Place Details",
+      "url": "https://maps.googleapis.com/maps/api/place/details/json?place_id=ChIJrw7QBKkVkFQRzU9nxb9GQ28&fields=name,formatted_address,geometry,place_id,types&key=API_KEY_HIDDEN",
+      "duration": 207,
+      "status": 200,
+      "success": false,
+      "placeName": "N/A",
+      "quota": "NOT_FOUND",
+      "error": "The provided Place ID is no longer valid. Please refresh cached Place IDs as per https://developers.google.com/places/web-service/place-id#save-id"
+    },
+    {
+      "name": "Quota Test",
+      "successful": 5,
+      "quotaErrors": 0,
+      "totalRequests": 5,
+      "quotaHealthy": true
+    }
+  ]
+}
